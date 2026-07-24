@@ -4,6 +4,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 import { DaySummaryCard } from "../../../components/history/DaySummaryCard";
 import { useDailySummaries } from "../../../features/hours/useDailySummary";
 import { useHourBank } from "../../../features/hours/useHourBank";
+import { colors } from "../../../lib/theme";
 import { formatMinutes } from "../../../types/domain";
 
 function isoDaysAgo(days: number): string {
@@ -24,7 +25,7 @@ export default function EmployeeDetailScreen() {
       <View style={styles.header}>
         <Text style={styles.balanceLabel}>Banco de horas</Text>
         <Text
-          style={[styles.balanceValue, { color: (balanceMinutes ?? 0) >= 0 ? "#16a34a" : "#dc2626" }]}
+          style={[styles.balanceValue, { color: (balanceMinutes ?? 0) >= 0 ? colors.success : colors.danger }]}
         >
           {balanceMinutes !== null ? formatMinutes(balanceMinutes) : "—"}
         </Text>
@@ -44,11 +45,11 @@ export default function EmployeeDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
-  header: { padding: 16, backgroundColor: "#fff", alignItems: "center", gap: 4 },
-  balanceLabel: { fontSize: 12, color: "#6b7280" },
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { padding: 16, backgroundColor: colors.surface, alignItems: "center", gap: 4 },
+  balanceLabel: { fontSize: 12, color: colors.textMuted },
   balanceValue: { fontSize: 24, fontWeight: "700" },
   list: { padding: 16 },
-  error: { color: "#dc2626", padding: 16 },
-  empty: { textAlign: "center", color: "#6b7280", marginTop: 32 },
+  error: { color: colors.danger, padding: 16 },
+  empty: { textAlign: "center", color: colors.textMuted, marginTop: 32 },
 });

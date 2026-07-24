@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { colors } from "../../lib/theme";
 import { formatMinutes } from "../../types/domain";
 
 export interface EmployeeRow {
@@ -21,7 +22,7 @@ export function EmployeeTable({ rows, onPress }: { rows: EmployeeRow[]; onPress:
           <Text
             style={[
               styles.balance,
-              { color: (row.balanceMinutes ?? 0) >= 0 ? "#16a34a" : "#dc2626" },
+              { color: (row.balanceMinutes ?? 0) >= 0 ? colors.success : colors.danger },
             ]}
           >
             {row.balanceMinutes !== null ? formatMinutes(row.balanceMinutes) : "—"}
@@ -39,12 +40,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: 8,
   },
   info: { flexDirection: "row", alignItems: "center", gap: 8 },
-  name: { fontSize: 15, fontWeight: "600", color: "#111827" },
-  inactive: { fontSize: 11, color: "#d97706" },
+  name: { fontSize: 15, fontWeight: "600", color: colors.text },
+  inactive: { fontSize: 11, color: colors.warning },
   balance: { fontSize: 15, fontWeight: "700" },
 });

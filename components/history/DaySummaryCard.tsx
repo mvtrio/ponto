@@ -1,10 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { Card } from "../ui/Card";
+import { colors } from "../../lib/theme";
 import { formatMinutes, type DailySummary } from "../../types/domain";
 
 export function DaySummaryCard({ summary }: { summary: DailySummary }) {
-  const balanceColor = summary.balance_minutes >= 0 ? "#16a34a" : "#dc2626";
+  const balanceColor = summary.balance_minutes >= 0 ? colors.success : colors.danger;
   return (
     <Card style={styles.card}>
       <View style={styles.row}>
@@ -22,8 +23,8 @@ export function DaySummaryCard({ summary }: { summary: DailySummary }) {
 const styles = StyleSheet.create({
   card: { gap: 4, marginBottom: 8 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  day: { fontSize: 15, fontWeight: "600", color: "#111827" },
-  incomplete: { fontSize: 12, color: "#d97706" },
-  worked: { fontSize: 14, color: "#374151" },
+  day: { fontSize: 15, fontWeight: "600", color: colors.text },
+  incomplete: { fontSize: 12, color: colors.warning },
+  worked: { fontSize: 14, color: colors.textMuted },
   balance: { fontSize: 14, fontWeight: "600" },
 });

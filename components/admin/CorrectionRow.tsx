@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
+import { colors } from "../../lib/theme";
 import type { Correction } from "../../types/domain";
 
 interface CorrectionRowProps {
@@ -33,9 +34,9 @@ export function CorrectionRow({ correction, onApprove, onReject, loading }: Corr
 
 const styles = StyleSheet.create({
   card: { gap: 4, marginBottom: 8 },
-  type: { fontSize: 14, fontWeight: "700", color: "#111827", textTransform: "uppercase" },
-  detail: { fontSize: 13, color: "#374151" },
-  reason: { fontSize: 13, color: "#6b7280", fontStyle: "italic" },
+  type: { fontSize: 14, fontWeight: "700", color: colors.text, textTransform: "uppercase" },
+  detail: { fontSize: 13, color: colors.textMuted },
+  reason: { fontSize: 13, color: colors.textFaint, fontStyle: "italic" },
   actions: { flexDirection: "row", gap: 8, marginTop: 8 },
   actionButton: { flex: 1 },
 });

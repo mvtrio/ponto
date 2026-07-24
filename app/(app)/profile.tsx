@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { signOut } from "../../features/auth/authService";
 import { useSession } from "../../features/auth/useSession";
+import { colors } from "../../lib/theme";
 
 export default function ProfileScreen() {
   const { profile, session } = useSession();
@@ -21,9 +22,9 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb", padding: 16, gap: 16, justifyContent: "center" },
+  container: { flex: 1, backgroundColor: colors.background, padding: 16, gap: 16, justifyContent: "center" },
   card: { gap: 4, alignItems: "center" },
-  name: { fontSize: 20, fontWeight: "700" },
-  email: { fontSize: 14, color: "#6b7280" },
-  role: { fontSize: 14, color: "#374151", marginTop: 8 },
+  name: { fontSize: 20, fontWeight: "700", color: colors.text },
+  email: { fontSize: 14, color: colors.textMuted },
+  role: { fontSize: 14, color: colors.textMuted, marginTop: 8 },
 });

@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 import { DaySummaryCard } from "../../components/history/DaySummaryCard";
 import { useDailySummaries } from "../../features/hours/useDailySummary";
 import { useSession } from "../../features/auth/useSession";
+import { colors } from "../../lib/theme";
 
 function isoDaysAgo(days: number): string {
   const d = new Date();
@@ -33,8 +34,8 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: { flex: 1, backgroundColor: colors.background },
   list: { padding: 16 },
-  error: { color: "#dc2626", padding: 16 },
-  empty: { textAlign: "center", color: "#6b7280", marginTop: 32 },
+  error: { color: colors.danger, padding: 16 },
+  empty: { textAlign: "center", color: colors.textMuted, marginTop: 32 },
 });

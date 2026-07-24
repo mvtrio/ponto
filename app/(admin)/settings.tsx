@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { fetchCompanySettings, updateCompanySettings } from "../../features/admin/adminService";
+import { signOut } from "../../features/auth/authService";
+import { useSession } from "../../features/auth/useSession";
+import { colors } from "../../lib/theme";
 
 export default function SettingsScreen() {
+  const { profile, session } = useSession();
   const [standardHours, setStandardHours] = useState("8");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,7 +39,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Card style={styles.card}>
         <Text style={styles.label}>Jornada padrão diária (horas)</Text>
         <TextInput
@@ -44,28 +48,38 @@ export default function SettingsScreen() {
           value={standardHours}
           onChangeText={setStandardHours}
           editable={!loading}
+          placeholderTextColor={colors.textFaint}
         />
         {message ? <Text style={styles.success}>{message}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Button label="Salvar" onPress={handleSave} loading={saving} disabled={loading} />
       </Card>
-    </View>
+
+      <Card style={styles.card}>
+        <Text style={styles.label}>Conectado como</Text>
+        <Text style={styles.account}>{profile?.full_name || session?.user.email}</Text>
+        <Button label="Sair" variant="danger" onPress={() => signOut()} />
+      </Card>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb", padding: 16, justifyContent: "center" },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: 16, gap: 16 },
   card: { gap: 12 },
-  label: { fontSize: 14, color: "#374151" },
+  account: { fontSize: 15, fontWeight: "600", color: colors.text },
+  label: { fontSize: 14, color: colors.textMuted },
   input: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
+    color: colors.text,
   },
-  success: { color: "#16a34a" },
-  error: { color: "#dc2626" },
+  success: { color: colors.success },
+  error: { color: colors.danger },
 });

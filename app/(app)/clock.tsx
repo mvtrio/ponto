@@ -8,6 +8,7 @@ import { captureLocation } from "../../features/capture/useLocation";
 import { capturePhoto } from "../../features/capture/useCameraCapture";
 import { createPunch, fetchLastPunchToday, nextPunchType } from "../../features/punches/punchService";
 import { useSession } from "../../features/auth/useSession";
+import { colors } from "../../lib/theme";
 import type { Punch, PunchType } from "../../types/domain";
 
 export default function ClockScreen() {
@@ -91,10 +92,10 @@ export default function ClockScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb", padding: 16, justifyContent: "center" },
+  container: { flex: 1, backgroundColor: colors.background, padding: 16, justifyContent: "center" },
   card: { gap: 16 },
-  greeting: { fontSize: 20, fontWeight: "700", color: "#111827" },
-  lastPunch: { fontSize: 14, color: "#6b7280" },
+  greeting: { fontSize: 20, fontWeight: "700", color: colors.text },
+  lastPunch: { fontSize: 14, color: colors.textMuted },
   photoPreview: { width: 96, height: 96, borderRadius: 8, alignSelf: "center" },
-  error: { color: "#dc2626" },
+  error: { color: colors.danger },
 });

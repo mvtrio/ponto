@@ -3,6 +3,7 @@ import { Link } from "expo-router";
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
+import { colors } from "../../lib/theme";
 import { signInWithPassword } from "../../features/auth/authService";
 
 export default function LoginScreen() {
@@ -34,6 +35,7 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="E-mail"
+        placeholderTextColor={colors.textFaint}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
@@ -42,6 +44,7 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Senha"
+        placeholderTextColor={colors.textFaint}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -63,37 +66,38 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 24,
-    backgroundColor: "#f9fafb",
+    backgroundColor: colors.background,
     gap: 12,
   },
   title: {
     fontSize: 32,
     fontWeight: "700",
     textAlign: "center",
-    color: "#111827",
+    color: colors.text,
   },
   subtitle: {
     fontSize: 14,
     textAlign: "center",
-    color: "#6b7280",
+    color: colors.textMuted,
     marginBottom: 16,
   },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
+    color: colors.text,
   },
   error: {
-    color: "#dc2626",
+    color: colors.danger,
     textAlign: "center",
   },
   link: {
     textAlign: "center",
-    color: "#2563eb",
+    color: colors.accent,
     marginTop: 8,
   },
 });

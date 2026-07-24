@@ -7,6 +7,7 @@ import { fetchEmployees } from "../../features/admin/adminService";
 import { exportCsv } from "../../features/export/csvExport";
 import { exportPdf } from "../../features/export/pdfExport";
 import { fetchDailySummaries } from "../../features/hours/hoursService";
+import { colors } from "../../lib/theme";
 import type { Profile } from "../../types/domain";
 
 function isoDaysAgo(days: number): string {
@@ -70,9 +71,21 @@ export default function ReportsScreen() {
         </ScrollView>
 
         <Text style={styles.label}>De</Text>
-        <TextInput style={styles.input} value={fromDate} onChangeText={setFromDate} placeholder="AAAA-MM-DD" />
+        <TextInput
+          style={styles.input}
+          value={fromDate}
+          onChangeText={setFromDate}
+          placeholder="AAAA-MM-DD"
+          placeholderTextColor={colors.textFaint}
+        />
         <Text style={styles.label}>Até</Text>
-        <TextInput style={styles.input} value={toDate} onChangeText={setToDate} placeholder="AAAA-MM-DD" />
+        <TextInput
+          style={styles.input}
+          value={toDate}
+          onChangeText={setToDate}
+          placeholder="AAAA-MM-DD"
+          placeholderTextColor={colors.textFaint}
+        />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -90,32 +103,33 @@ export default function ReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16 },
   card: { gap: 8 },
-  label: { fontSize: 13, color: "#6b7280", marginTop: 8 },
+  label: { fontSize: 13, color: colors.textMuted, marginTop: 8 },
   employeeList: { flexDirection: "row" },
   employeeChip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: colors.surfaceAlt,
     marginRight: 8,
-    color: "#111827",
+    color: colors.text,
     fontSize: 13,
     overflow: "hidden",
   },
-  employeeChipSelected: { backgroundColor: "#2563eb", color: "#fff" },
+  employeeChipSelected: { backgroundColor: colors.chipSelected, color: colors.chipSelectedText },
   input: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: colors.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
+    color: colors.text,
   },
-  error: { color: "#dc2626" },
+  error: { color: colors.danger },
   actions: { flexDirection: "row", gap: 8, marginTop: 12 },
   actionButton: { flex: 1 },
 });

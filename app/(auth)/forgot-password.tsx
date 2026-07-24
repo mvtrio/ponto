@@ -2,6 +2,7 @@ import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
+import { colors } from "../../lib/theme";
 import { requestPasswordReset } from "../../features/auth/authService";
 
 export default function ForgotPasswordScreen() {
@@ -30,6 +31,7 @@ export default function ForgotPasswordScreen() {
       <TextInput
         style={styles.input}
         placeholder="E-mail"
+        placeholderTextColor={colors.textFaint}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
@@ -43,17 +45,18 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#f9fafb", gap: 12 },
-  title: { fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 16 },
+  container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: colors.background, gap: 12 },
+  title: { fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 16, color: colors.text },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
+    color: colors.text,
   },
-  success: { color: "#16a34a", textAlign: "center" },
-  error: { color: "#dc2626", textAlign: "center" },
+  success: { color: colors.success, textAlign: "center" },
+  error: { color: colors.danger, textAlign: "center" },
 });

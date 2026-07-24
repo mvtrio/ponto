@@ -4,6 +4,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 import { CorrectionRow } from "../../components/admin/CorrectionRow";
 import { approveCorrection } from "../../features/corrections/correctionService";
 import { usePendingCorrections } from "../../features/corrections/useCorrections";
+import { colors } from "../../lib/theme";
 
 export default function CorrectionsScreen() {
   const { corrections, loading, error, reload } = usePendingCorrections();
@@ -41,8 +42,8 @@ export default function CorrectionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: { flex: 1, backgroundColor: colors.background },
   list: { padding: 16 },
-  error: { color: "#dc2626", padding: 16 },
-  empty: { textAlign: "center", color: "#6b7280", marginTop: 32 },
+  error: { color: colors.danger, padding: 16 },
+  empty: { textAlign: "center", color: colors.textMuted, marginTop: 32 },
 });

@@ -1,5 +1,7 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 
+import { colors } from "../../lib/theme";
+
 interface ButtonProps {
   label: string;
   onPress: () => void;
@@ -8,27 +10,32 @@ interface ButtonProps {
   loading?: boolean;
 }
 
-const COLORS = {
-  primary: "#2563eb",
-  secondary: "#e5e7eb",
-  danger: "#dc2626",
+const BACKGROUND = {
+  primary: colors.accent,
+  secondary: colors.secondaryButton,
+  danger: colors.danger,
+};
+
+const TEXT_COLOR = {
+  primary: colors.accentText,
+  secondary: colors.secondaryButtonText,
+  danger: colors.accentText,
 };
 
 export function Button({ label, onPress, variant = "primary", disabled, loading }: ButtonProps) {
-  const isTextDark = variant === "secondary";
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: COLORS[variant], opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
+        { backgroundColor: BACKGROUND[variant], opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isTextDark ? "#111827" : "#fff"} />
+        <ActivityIndicator color={TEXT_COLOR[variant]} />
       ) : (
-        <Text style={[styles.label, { color: isTextDark ? "#111827" : "#fff" }]}>{label}</Text>
+        <Text style={[styles.label, { color: TEXT_COLOR[variant] }]}>{label}</Text>
       )}
     </Pressable>
   );
