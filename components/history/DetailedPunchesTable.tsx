@@ -9,6 +9,7 @@ const STATUS_ICON: Record<DetailedDayRow["status"], { name: keyof typeof Ionicon
   ok: { name: "checkmark-circle", color: colors.success },
   warning: { name: "warning", color: colors.warning },
   folga: { name: "checkmark-circle", color: colors.success },
+  holiday: { name: "flag", color: colors.accent },
 };
 
 const COLUMN_WIDTH = 90;
@@ -57,7 +58,9 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
         {rows.map((row) => {
           const icon = STATUS_ICON[row.status];
           const isFolga = row.status === "folga";
-          const timeColor = isFolga ? colors.textFaint : row.status === "warning" ? colors.warning : colors.text;
+          const isHoliday = row.status === "holiday";
+          const timeColor =
+            isFolga || isHoliday ? colors.textFaint : row.status === "warning" ? colors.warning : colors.text;
           const balanceColor = (row.balanceMinutes ?? 0) >= 0 ? colors.success : colors.warning;
 
           return (
@@ -65,10 +68,13 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
               <View style={[styles.cell, { width: 44, alignItems: "center" }]}>
                 <Ionicons name={icon.name} size={18} color={icon.color} />
               </View>
-              <Cell width={DATA_COLUMN_WIDTH}>{row.label}</Cell>
+              <Cell width={DATA_COLUMN_WIDTH}>
+                {row.label}
+                {isHoliday && row.holidayName ? ` · ${row.holidayName}` : ""}
+              </Cell>
               {TIME_COLUMNS.map((key) => (
                 <Cell key={key} width={COLUMN_WIDTH} color={timeColor}>
-                  {isFolga ? "FOLGA" : row[key] ?? "—"}
+                  {isFolga ? "FOLGA" : isHoliday ? "FERIADO" : row[key] ?? "—"}
                 </Cell>
               ))}
               <Cell width={COLUMN_WIDTH} color={balanceColor} bold>

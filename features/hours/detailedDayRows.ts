@@ -1,14 +1,16 @@
 import { fetchCompanySettings } from "../company/companySettingsService";
+import { fetchHolidays } from "../company/holidaysService";
 import { fetchPunchesForRange } from "../punches/punchService";
 import { fetchDailySummaries } from "./hoursService";
 import type { Punch } from "../../types/domain";
 
-export type DayStatus = "ok" | "warning" | "folga";
+export type DayStatus = "ok" | "warning" | "folga" | "holiday";
 
 export interface DetailedDayRow {
   day: string;
   label: string;
   status: DayStatus;
+  holidayName?: string;
   entrada1: string | null;
   saida1: string | null;
   entrada2: string | null;
@@ -63,13 +65,15 @@ export async function fetchDetailedDayRows(
   const toDateExclusive = new Date(`${toDate}T00:00:00`);
   toDateExclusive.setDate(toDateExclusive.getDate() + 1);
 
-  const [summaries, punches, settings] = await Promise.all([
+  const [summaries, punches, settings, holidays] = await Promise.all([
     fetchDailySummaries(employeeId, fromDate, toDate),
     fetchPunchesForRange(employeeId, `${fromDate}T00:00:00.000Z`, toDateExclusive.toISOString()),
     fetchCompanySettings(),
+    fetchHolidays(fromDate, toDate).catch(() => []),
   ]);
 
   const summaryByDay = new Map(summaries.map((s) => [s.day, s]));
+  const holidayByDay = new Map(holidays.map((h) => [h.day, h.name]));
 
   const punchesByDay = new Map<string, Punch[]>();
   for (const punch of punches) {
@@ -95,7 +99,12 @@ export async function fetchDetailedDayRows(
       saida3: null,
     };
 
+    const holidayName = holidayByDay.get(day);
+
     if (dayPunches.length === 0) {
+      if (holidayName) {
+        return { day, label, status: "holiday" as const, holidayName, ...emptyTimes, balanceMinutes: null };
+      }
       if (!isWorkDay) {
         return { day, label, status: "folga" as const, ...emptyTimes, balanceMinutes: null };
       }
@@ -117,6 +126,6 @@ export async function fetchDetailedDayRows(
     const isIncomplete = summary?.is_incomplete ?? true;
     const status: DayStatus = isIncomplete || (balanceMinutes !== null && balanceMinutes < 0) ? "warning" : "ok";
 
-    return { day, label, status, ...times, balanceMinutes };
+    return { day, label, status, holidayName, ...times, balanceMinutes };
   });
 }
