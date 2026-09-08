@@ -3,6 +3,7 @@ import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Card } from "../../components/ui/Card";
 import { ClockButton } from "../../components/clock/ClockButton";
+import { LiveClock } from "../../components/clock/LiveClock";
 import { LocationBadge } from "../../components/clock/LocationBadge";
 import { DetailedPunchesTable } from "../../components/history/DetailedPunchesTable";
 import { captureLocation } from "../../features/capture/useLocation";
@@ -117,6 +118,13 @@ export default function ClockScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Card style={styles.card}>
         <Text style={styles.greeting}>Olá, {profile?.full_name || "funcionário"}</Text>
+
+        <LiveClock />
+
+        <View style={styles.punchButton}>
+          <ClockButton nextType={nextType} onPress={handlePunch} loading={submitting} />
+        </View>
+
         <Text style={styles.lastPunch}>
           {loadingLast
             ? "Carregando última marcação…"
@@ -136,8 +144,6 @@ export default function ClockScreen() {
 
         {successMessage ? <Text style={styles.success}>✓ {successMessage}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        <ClockButton nextType={nextType} onPress={handlePunch} loading={submitting} />
       </Card>
 
       <Card style={styles.bankCard}>
@@ -174,6 +180,8 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 16 },
   card: { gap: 16 },
   greeting: { fontSize: 20, fontWeight: "700", color: colors.text },
+  // Botão centralizado e estreito: não precisa ocupar a largura toda da tela.
+  punchButton: { alignSelf: "center", width: "100%", maxWidth: 260 },
   lastPunch: { fontSize: 14, color: colors.textMuted },
   dayClosed: { fontSize: 13, color: colors.success },
   photoPreview: { width: 96, height: 96, borderRadius: 8, alignSelf: "center" },
