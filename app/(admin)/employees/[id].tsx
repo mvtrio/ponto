@@ -230,7 +230,7 @@ export default function EmployeeDetailScreen() {
               {confirmingDelete ? (
                 <>
                   <Text style={styles.confirmText}>
-                    Tem certeza? Isso apaga a conta e todo o histórico de {fullName || "este funcionário"}
+                    Tem certeza? Isso apaga a conta e todo o histórico de {fullName || "este funcionário"}{" "}
                     permanentemente. Não dá para desfazer.
                   </Text>
                   <Button
