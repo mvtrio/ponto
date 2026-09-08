@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import * as Location from "expo-location";
 
 export interface CapturedLocation {
@@ -7,15 +8,20 @@ export interface CapturedLocation {
 }
 
 /**
- * Best-effort: nunca lança erro e nunca trava. Falha de GPS não deve bloquear a marcação
- * de ponto, apenas resulta em location = null (sinalizado na UI).
+ * Localização da marcação.
  *
- * O timeout cobre TAMBÉM o pedido de permissão, não só a obtenção da posição. No
- * navegador, `requestForegroundPermissionsAsync` abre o popup de localização do Chrome e
- * só resolve quando o usuário responde — se ele ignorar ou deixar o popup de lado, o
- * await ficava pendurado para sempre e a marcação nunca chegava a ser gravada.
+ * No web não há captura: pedir a permissão abre o popup de localização do Chrome, e bater
+ * ponto tem que ser um clique e nada mais — mesma decisão já tomada para a foto. Retorna
+ * null direto e a marcação é gravada sem localização. No nativo (Android/iOS), onde o GPS
+ * é o ponto do recurso, a captura segue normal.
+ *
+ * Best-effort no nativo: nunca lança erro e nunca trava. O timeout cobre também o pedido
+ * de permissão, não só a obtenção da posição — um prompt deixado sem resposta pendurava o
+ * await para sempre e a marcação nunca chegava a ser gravada.
  */
 export async function captureLocation(timeoutMs = 8000): Promise<CapturedLocation | null> {
+  if (Platform.OS === "web") return null;
+
   const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
 
   async function locate(): Promise<CapturedLocation | null> {

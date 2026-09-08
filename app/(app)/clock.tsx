@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Card } from "../../components/ui/Card";
 import { ClockButton } from "../../components/clock/ClockButton";
@@ -158,7 +158,8 @@ export default function ClockScreen() {
           </View>
         ) : null}
 
-        <LocationBadge status={locationStatus} />
+        {/* No web não há captura de localização, então o aviso só confundiria. */}
+        {Platform.OS === "web" ? null : <LocationBadge status={locationStatus} />}
 
         {lastPhotoUri ? <Image source={{ uri: lastPhotoUri }} style={styles.photoPreview} /> : null}
 
