@@ -29,6 +29,30 @@ export async function updateOwnPassword(newPassword: string) {
 }
 
 /**
+ * Redefinição pela tela de "Definir nova senha": o e-mail informado precisa bater com o
+ * da conta da sessão ativa (a que o link de recuperação abre, ou a de quem já está
+ * logado). O e-mail identifica e confere a conta — não é possível trocar a senha de
+ * outra conta a partir do app, porque a chave anônima não tem esse privilégio.
+ */
+export async function resetPasswordForEmail(email: string, newPassword: string) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    throw new Error(
+      "Não há sessão ativa para identificar a conta. Peça ao administrador para redefinir sua senha."
+    );
+  }
+
+  if (user.email.toLowerCase() !== email.trim().toLowerCase()) {
+    throw new Error("O e-mail informado não corresponde à conta desta sessão.");
+  }
+
+  await updateOwnPassword(newPassword);
+}
+
+/**
  * Troca a senha exigindo a senha atual. O Supabase não valida a senha antiga em
  * `updateUser`, então ela é conferida com um login em um cliente isolado (sem persistir
  * sessão e com storageKey próprio) — assim a sessão ativa do usuário não é substituída
