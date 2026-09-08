@@ -11,6 +11,13 @@ import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
 import type { Punch, PunchType } from "../../types/domain";
 
+const CONFIRM_LABELS: Record<PunchType, string> = {
+  clock_in: "Entrada registrada com sucesso!",
+  break_start: "Início do intervalo registrado!",
+  break_end: "Fim do intervalo registrado!",
+  clock_out: "Saída registrada com sucesso!",
+};
+
 export default function ClockScreen() {
   const { profile } = useSession();
   const [lastPunch, setLastPunch] = useState<Punch | null>(null);
@@ -19,6 +26,7 @@ export default function ClockScreen() {
   const [locationStatus, setLocationStatus] = useState<"idle" | "capturing" | "captured" | "unavailable">("idle");
   const [lastPhotoUri, setLastPhotoUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const reloadLastPunch = useCallback(async () => {
     if (!profile) return;
@@ -40,6 +48,7 @@ export default function ClockScreen() {
   async function handlePunch() {
     if (!profile) return;
     setError(null);
+    setSuccessMessage(null);
     setSubmitting(true);
     setLocationStatus("capturing");
     try {
@@ -60,6 +69,7 @@ export default function ClockScreen() {
       });
 
       await reloadLastPunch();
+      setSuccessMessage(CONFIRM_LABELS[nextType]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao bater ponto");
     } finally {
@@ -83,6 +93,7 @@ export default function ClockScreen() {
 
         {lastPhotoUri ? <Image source={{ uri: lastPhotoUri }} style={styles.photoPreview} /> : null}
 
+        {successMessage ? <Text style={styles.success}>✓ {successMessage}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <ClockButton nextType={nextType} onPress={handlePunch} loading={submitting} />
@@ -98,4 +109,5 @@ const styles = StyleSheet.create({
   lastPunch: { fontSize: 14, color: colors.textMuted },
   photoPreview: { width: 96, height: 96, borderRadius: 8, alignSelf: "center" },
   error: { color: colors.danger },
+  success: { color: colors.success, fontWeight: "600" },
 });
