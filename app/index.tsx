@@ -8,6 +8,6 @@ export default function Index() {
 
   if (loading) return <LoadingScreen />;
   if (!session) return <Redirect href="/(auth)/login" />;
-  if (profile?.role === "admin") return <Redirect href="/(admin)/employees" />;
+  if (profile?.role === "admin") return <Redirect href="/(admin)/dashboard" />;
   return <Redirect href="/(app)/clock" />;
 }

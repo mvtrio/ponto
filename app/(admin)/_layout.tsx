@@ -22,6 +22,7 @@ export default function AdminLayout() {
         tabBarInactiveTintColor: colors.textFaint,
       }}
     >
+      <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
       <Tabs.Screen name="employees/index" options={{ title: "Funcionários" }} />
       <Tabs.Screen name="employees/new" options={{ href: null, title: "Novo funcionário" }} />
       <Tabs.Screen name="employees/[id]" options={{ href: null, title: "Funcionário" }} />
