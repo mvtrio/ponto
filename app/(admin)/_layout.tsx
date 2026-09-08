@@ -17,7 +17,8 @@ export default function AdminLayout() {
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarPosition: "top",
+        tabBarStyle: { backgroundColor: colors.surface, borderBottomColor: colors.border },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textFaint,
       }}
