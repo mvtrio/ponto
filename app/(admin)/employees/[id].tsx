@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { FlatList, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { DaySummaryCard } from "../../../components/history/DaySummaryCard";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
-import { fetchEmployeeById, updateEmployee } from "../../../features/admin/adminService";
+import {
+  deleteEmployee,
+  fetchEmployeeById,
+  resetEmployeePassword,
+  updateEmployee,
+} from "../../../features/admin/adminService";
 import { useDailySummaries } from "../../../features/hours/useDailySummary";
 import { useHourBank } from "../../../features/hours/useHourBank";
 import { colors } from "../../../lib/theme";
@@ -34,6 +39,16 @@ export default function EmployeeDetailScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +84,42 @@ export default function EmployeeDetailScreen() {
       setSaveError(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    setPasswordError(null);
+    setPasswordMessage(null);
+    if (newPassword.length < 6) {
+      setPasswordError("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("As senhas não coincidem.");
+      return;
+    }
+    setResettingPassword(true);
+    try {
+      await resetEmployeePassword(id, newPassword);
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMessage("Senha redefinida.");
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : "Erro ao redefinir senha");
+    } finally {
+      setResettingPassword(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      await deleteEmployee(id);
+      router.back();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Erro ao excluir funcionário");
+      setDeleting(false);
     }
   }
 
@@ -144,6 +195,67 @@ export default function EmployeeDetailScreen() {
               )}
             </Card>
 
+            <Card style={styles.card}>
+              <Text style={styles.label}>Redefinir senha</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Nova senha (mínimo 6 caracteres)"
+                placeholderTextColor={colors.textFaint}
+                secureTextEntry
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Confirmar nova senha"
+                placeholderTextColor={colors.textFaint}
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+              {passwordMessage ? <Text style={styles.success}>{passwordMessage}</Text> : null}
+              {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
+              <Button
+                label="Redefinir senha"
+                variant="secondary"
+                onPress={handleResetPassword}
+                loading={resettingPassword}
+                disabled={!newPassword || !confirmPassword}
+              />
+            </Card>
+
+            <Card style={styles.card}>
+              <Text style={styles.label}>Zona de risco</Text>
+              {deleteError ? <Text style={styles.error}>{deleteError}</Text> : null}
+              {confirmingDelete ? (
+                <>
+                  <Text style={styles.confirmText}>
+                    Tem certeza? Isso apaga a conta e todo o histórico de {fullName || "este funcionário"}
+                    permanentemente. Não dá para desfazer.
+                  </Text>
+                  <Button
+                    label="Confirmar exclusão"
+                    variant="danger"
+                    onPress={handleDelete}
+                    loading={deleting}
+                  />
+                  <Button
+                    label="Cancelar"
+                    variant="secondary"
+                    onPress={() => setConfirmingDelete(false)}
+                    disabled={deleting}
+                  />
+                </>
+              ) : (
+                <Button
+                  label="Excluir funcionário"
+                  variant="danger"
+                  onPress={() => setConfirmingDelete(true)}
+                  disabled={loadingProfile}
+                />
+              )}
+            </Card>
+
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <Text style={styles.sectionTitle}>Últimos 30 dias</Text>
           </>
@@ -173,6 +285,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   sectionTitle: { fontSize: 14, fontWeight: "600", color: colors.textMuted, marginBottom: 8 },
+  confirmText: { fontSize: 13, color: colors.textMuted },
   error: { color: colors.danger, padding: 16 },
   success: { color: colors.success },
   empty: { textAlign: "center", color: colors.textMuted, marginTop: 32 },

@@ -80,4 +80,27 @@ export async function updateEmployee(id: string, input: UpdateEmployeeInput): Pr
   return data as unknown as Profile;
 }
 
+async function callAdminUserActions(body: Record<string, unknown>): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("admin-user-actions", { body });
+  if (error) {
+    // FunctionsHttpError (status >= 400): a resposta JSON com a mensagem específica está em
+    // error.context (o Response bruto), não em `error.message` (que é só um texto genérico).
+    const context = (error as { context?: Response }).context;
+    if (context) {
+      const responseBody = await context.json().catch(() => null);
+      if (responseBody?.error) throw new Error(responseBody.error);
+    }
+    throw error;
+  }
+  if (data?.error) throw new Error(data.error);
+}
+
+export async function resetEmployeePassword(employeeId: string, newPassword: string): Promise<void> {
+  await callAdminUserActions({ action: "reset_password", employeeId, newPassword });
+}
+
+export async function deleteEmployee(employeeId: string): Promise<void> {
+  await callAdminUserActions({ action: "delete_user", employeeId });
+}
+
 export { fetchCompanySettings, updateCompanySettings } from "../company/companySettingsService";
