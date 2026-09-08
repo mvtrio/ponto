@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { router } from "expo-router";
+import { useCallback, useState } from "react";
+import { useFocusEffect, router } from "expo-router";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { EmployeeTable, type EmployeeRow } from "../../../components/admin/EmployeeTable";
+import { Button } from "../../../components/ui/Button";
 import { fetchEmployees } from "../../../features/admin/adminService";
 import { fetchHourBankBalance } from "../../../features/hours/hoursService";
 import { colors } from "../../../lib/theme";
@@ -12,37 +13,43 @@ export default function EmployeesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
 
-    async function load() {
-      setLoading(true);
-      try {
-        const employees = await fetchEmployees();
-        const withBalances = await Promise.all(
-          employees.map(async (e) => ({
-            id: e.id,
-            fullName: e.full_name,
-            active: e.active,
-            balanceMinutes: await fetchHourBankBalance(e.id).catch(() => null),
-          }))
-        );
-        if (!cancelled) setRows(withBalances);
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Erro ao carregar funcionários");
-      } finally {
-        if (!cancelled) setLoading(false);
+      async function load() {
+        setLoading(true);
+        try {
+          const employees = await fetchEmployees();
+          const withBalances = await Promise.all(
+            employees.map(async (e) => ({
+              id: e.id,
+              fullName: e.full_name,
+              employeeCode: e.employee_code,
+              active: e.active,
+              balanceMinutes: await fetchHourBankBalance(e.id).catch(() => null),
+            }))
+          );
+          if (!cancelled) setRows(withBalances);
+        } catch (err) {
+          if (!cancelled) setError(err instanceof Error ? err.message : "Erro ao carregar funcionários");
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
       }
-    }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      load();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Button label="+ Novo funcionário" onPress={() => router.push("/(admin)/employees/new")} />
+      </View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlatList
         data={rows}
@@ -59,6 +66,7 @@ export default function EmployeesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  header: { padding: 16, paddingBottom: 0 },
   list: { padding: 16 },
   error: { color: colors.danger, padding: 16 },
   empty: { textAlign: "center", color: colors.textMuted, marginTop: 32 },

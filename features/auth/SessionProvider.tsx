@@ -26,6 +26,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return;
       }
       const profile = await fetchProfile(session.user.id);
+      if (profile && !profile.active) {
+        await supabase.auth.signOut();
+        if (mounted) setState({ session: null, profile: null, loading: false });
+        return;
+      }
       if (mounted) setState({ session, profile, loading: false });
     }
 

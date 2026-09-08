@@ -6,6 +6,7 @@ import { formatMinutes } from "../../types/domain";
 export interface EmployeeRow {
   id: string;
   fullName: string;
+  employeeCode: string | null;
   active: boolean;
   balanceMinutes: number | null;
 }
@@ -16,7 +17,10 @@ export function EmployeeTable({ rows, onPress }: { rows: EmployeeRow[]; onPress:
       {rows.map((row) => (
         <Pressable key={row.id} style={styles.row} onPress={() => onPress(row.id)}>
           <View style={styles.info}>
-            <Text style={styles.name}>{row.fullName}</Text>
+            <View>
+              <Text style={styles.name}>{row.fullName}</Text>
+              {row.employeeCode ? <Text style={styles.code}>#{row.employeeCode}</Text> : null}
+            </View>
             {!row.active ? <Text style={styles.inactive}>inativo</Text> : null}
           </View>
           <Text
@@ -48,6 +52,7 @@ const styles = StyleSheet.create({
   },
   info: { flexDirection: "row", alignItems: "center", gap: 8 },
   name: { fontSize: 15, fontWeight: "600", color: colors.text },
+  code: { fontSize: 12, color: colors.textFaint, marginTop: 2 },
   inactive: { fontSize: 11, color: colors.warning },
   balance: { fontSize: 15, fontWeight: "700" },
 });
