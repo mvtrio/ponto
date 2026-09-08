@@ -11,15 +11,15 @@ const MIN_LENGTH = 6;
 /**
  * Define a nova senha direto, sem enviar link por e-mail — decisão do produto.
  *
- * O e-mail identifica a conta, mas quem autoriza a troca é a sessão ativa: a que o link
- * de recuperação do Supabase abre, ou a de um usuário já logado. Trocar a senha de uma
- * conta só a partir do e-mail exigiria privilégio de servidor, que o app (chave anônima)
- * não tem — e um endpoint desses seria uma via de tomada de conta. Deslogado, portanto,
- * a operação falha com uma mensagem explicando o caminho pelo administrador.
+ * Funciona com o usuário deslogado porque a senha atual autoriza a troca. Só o e-mail não
+ * basta: a chave anônima não pode alterar outra conta, e um endpoint que fizesse isso sem
+ * autenticação permitiria tomar a conta de qualquer usuário. Quem realmente esqueceu a
+ * senha precisa do administrador.
  */
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -41,6 +41,10 @@ export default function ForgotPasswordScreen() {
       setError("Informe o e-mail da conta.");
       return;
     }
+    if (!currentPassword) {
+      setError("Informe a senha atual.");
+      return;
+    }
     if (newPassword.length < MIN_LENGTH) {
       setError(`A senha precisa ter pelo menos ${MIN_LENGTH} caracteres.`);
       return;
@@ -48,18 +52,12 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      await resetPasswordForEmail(email, newPassword);
+      await resetPasswordForEmail(email, currentPassword, newPassword);
+      setCurrentPassword("");
       setNewPassword("");
-      setMessage("Senha alterada com sucesso.");
+      setMessage("Senha alterada com sucesso. Entre com a nova senha.");
     } catch (err) {
-      const raw = err instanceof Error ? err.message : "";
-      // Sem sessão o Supabase responde "Auth session missing"; traduzimos para algo
-      // acionável em vez de repassar o erro cru.
-      setError(
-        /auth session missing/i.test(raw)
-          ? "Não há sessão ativa para identificar a conta. Peça ao administrador para redefinir sua senha."
-          : raw || "Erro ao alterar a senha"
-      );
+      setError(err instanceof Error ? err.message : "Erro ao alterar a senha");
     } finally {
       setLoading(false);
     }
@@ -78,6 +76,16 @@ export default function ForgotPasswordScreen() {
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Senha atual"
+          placeholderTextColor={colors.textFaint}
+          secureTextEntry
+          autoCapitalize="none"
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
         />
 
         <TextInput

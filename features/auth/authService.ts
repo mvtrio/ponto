@@ -29,27 +29,40 @@ export async function updateOwnPassword(newPassword: string) {
 }
 
 /**
- * Redefinição pela tela de "Definir nova senha": o e-mail informado precisa bater com o
- * da conta da sessão ativa (a que o link de recuperação abre, ou a de quem já está
- * logado). O e-mail identifica e confere a conta — não é possível trocar a senha de
- * outra conta a partir do app, porque a chave anônima não tem esse privilégio.
+ * Redefinição pela tela de "Definir nova senha", funcionando com o usuário deslogado.
+ *
+ * A senha atual é o que identifica e autoriza: o login é feito num cliente isolado (sem
+ * persistir sessão, com storageKey próprio, para não mexer na sessão do app) e a troca
+ * acontece nesse cliente, que já tem a sessão da conta.
+ *
+ * Não existe caminho "só com o e-mail": a chave anônima não tem privilégio para alterar
+ * outra conta, e um endpoint que fizesse isso sem autenticação permitiria a qualquer um
+ * tomar a conta de qualquer usuário. Quem esqueceu a senha precisa do administrador
+ * (tela de Funcionários) ou do painel do Supabase.
  */
-export async function resetPasswordForEmail(email: string, newPassword: string) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function resetPasswordForEmail(email: string, currentPassword: string, newPassword: string) {
+  const client = createClient(
+    process.env.EXPO_PUBLIC_SUPABASE_URL as string,
+    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        storageKey: `sb-temp-reset-${Date.now()}`,
+      },
+    }
+  );
 
-  if (!user?.email) {
-    throw new Error(
-      "Não há sessão ativa para identificar a conta. Peça ao administrador para redefinir sua senha."
-    );
-  }
+  const { error: signInError } = await client.auth.signInWithPassword({
+    email: email.trim(),
+    password: currentPassword,
+  });
+  if (signInError) throw new Error("E-mail ou senha atual incorretos.");
 
-  if (user.email.toLowerCase() !== email.trim().toLowerCase()) {
-    throw new Error("O e-mail informado não corresponde à conta desta sessão.");
-  }
+  const { error } = await client.auth.updateUser({ password: newPassword });
+  if (error) throw error;
 
-  await updateOwnPassword(newPassword);
+  await client.auth.signOut();
 }
 
 /**
