@@ -27,6 +27,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="employees/index" options={{ title: "Funcionários" }} />
       <Tabs.Screen name="employees/new" options={{ href: null, title: "Novo funcionário" }} />
       <Tabs.Screen name="employees/[id]" options={{ href: null, title: "Funcionário" }} />
+      <Tabs.Screen name="approvals" options={{ title: "Aprovações" }} />
       <Tabs.Screen name="corrections" options={{ title: "Correções" }} />
       <Tabs.Screen name="reports" options={{ title: "Relatórios" }} />
       <Tabs.Screen name="settings" options={{ title: "Configurações" }} />

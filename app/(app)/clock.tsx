@@ -14,11 +14,16 @@ import { useHourBank } from "../../features/hours/useHourBank";
 import { usePeriodOvertimeTotal } from "../../features/hours/useIndicators";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
-import { formatMinutes, type ActivePunchType, type Punch } from "../../types/domain";
+import {
+  PUNCH_TYPE_LABELS,
+  formatMinutes,
+  type ActivePunchType,
+  type Punch,
+} from "../../types/domain";
 
 const CONFIRM_LABELS: Record<ActivePunchType, string> = {
-  clock_in: "Entrada registrada com sucesso!",
-  clock_out: "Saída registrada com sucesso!",
+  clock_in: "Entrada registrada! Aguardando aprovação do administrador.",
+  clock_out: "Saída registrada! Aguardando aprovação do administrador.",
 };
 
 const PUNCH_LABELS: Record<ActivePunchType, string> = {
@@ -80,6 +85,7 @@ export default function ClockScreen() {
 
   const nextType = nextPunchType(todayPunches);
   const lastPunch = todayPunches.length ? todayPunches[todayPunches.length - 1] : null;
+  const pendingToday = todayPunches.filter((p) => p.approval_status === "pending");
 
   async function handlePunch() {
     if (!profile || !nextType) return;
@@ -138,6 +144,20 @@ export default function ClockScreen() {
           <Text style={styles.dayClosed}>Entrada e saída de hoje já registradas.</Text>
         ) : null}
 
+        {pendingToday.length > 0 ? (
+          <View style={styles.pendingBox}>
+            <Text style={styles.pendingTitle}>Aguardando aprovação do administrador</Text>
+            {pendingToday.map((punch) => (
+              <Text key={punch.id} style={styles.pendingItem}>
+                • {PUNCH_TYPE_LABELS[punch.type]} às {formatTime(punch.occurred_at)}
+              </Text>
+            ))}
+            <Text style={styles.pendingHint}>
+              Estas marcações só entram no banco de horas depois de aprovadas.
+            </Text>
+          </View>
+        ) : null}
+
         <LocationBadge status={locationStatus} />
 
         {lastPhotoUri ? <Image source={{ uri: lastPhotoUri }} style={styles.photoPreview} /> : null}
@@ -184,6 +204,17 @@ const styles = StyleSheet.create({
   punchButton: { alignSelf: "center", width: "100%", maxWidth: 260 },
   lastPunch: { fontSize: 14, color: colors.textMuted },
   dayClosed: { fontSize: 13, color: colors.success },
+  pendingBox: {
+    gap: 4,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    backgroundColor: colors.surfaceAlt,
+  },
+  pendingTitle: { fontSize: 16, fontWeight: "700", color: colors.warning },
+  pendingItem: { fontSize: 16, color: colors.text },
+  pendingHint: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   photoPreview: { width: 96, height: 96, borderRadius: 8, alignSelf: "center" },
   error: { color: colors.danger },
   success: { color: colors.success, fontWeight: "600" },

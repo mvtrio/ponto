@@ -61,11 +61,19 @@ export async function createPunch(input: CreatePunchInput): Promise<Punch> {
   return data as unknown as Punch;
 }
 
+/**
+ * Marcações vigentes do período para exibição — inclui as pendentes de aprovação, que
+ * aparecem nas telas com o status, mas ainda não contam no cálculo de horas. Por isso lê
+ * de `punches` e não de `effective_punches` (que só traz as aprovadas). Rejeitadas ficam
+ * de fora: para efeito de tela é como se nunca tivessem sido batidas.
+ */
 export async function fetchPunchesForRange(employeeId: string, fromIso: string, toIso: string): Promise<Punch[]> {
   const { data, error } = await supabase
-    .from("effective_punches")
+    .from("punches")
     .select("*")
     .eq("employee_id", employeeId)
+    .is("superseded_by", null)
+    .neq("approval_status", "rejected")
     .in("type", ACTIVE_TYPES)
     .gte("occurred_at", fromIso)
     .lt("occurred_at", toIso)
@@ -73,6 +81,29 @@ export async function fetchPunchesForRange(employeeId: string, fromIso: string, 
 
   if (error) throw error;
   return (data ?? []) as unknown as Punch[];
+}
+
+/** Marcações pendentes de aprovação, de todos os funcionários (uso do admin). */
+export async function fetchPendingPunches(limit = 100): Promise<Punch[]> {
+  const { data, error } = await supabase
+    .from("punches")
+    .select("*")
+    .eq("approval_status", "pending")
+    .is("superseded_by", null)
+    .order("occurred_at", { ascending: true })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []) as unknown as Punch[];
+}
+
+export async function reviewPunch(punchId: string, approve: boolean): Promise<Punch> {
+  const { data, error } = await supabase.rpc("review_punch", {
+    p_punch_id: punchId,
+    p_approve: approve,
+  });
+  if (error) throw error;
+  return data as unknown as Punch;
 }
 
 /** Marcações de entrada/saída de hoje, em ordem cronológica. */

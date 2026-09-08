@@ -29,6 +29,15 @@ export const PUNCH_TYPE_LABELS: Record<PunchType, string> = {
 
 export type PunchSource = "mobile" | "web" | "correction";
 
+/** Marcação nasce `pending` e só entra no cálculo de horas depois de aprovada. */
+export type PunchApprovalStatus = "pending" | "approved" | "rejected";
+
+export const PUNCH_APPROVAL_LABELS: Record<PunchApprovalStatus, string> = {
+  pending: "Aguardando aprovação",
+  approved: "Aprovada",
+  rejected: "Rejeitada",
+};
+
 export interface Punch {
   id: string;
   employee_id: string;
@@ -42,6 +51,9 @@ export interface Punch {
   source: PunchSource;
   is_corrected: boolean;
   superseded_by: string | null;
+  approval_status: PunchApprovalStatus;
+  approved_by: string | null;
+  approved_at: string | null;
 }
 
 export type CorrectionStatus = "pending" | "approved" | "rejected";
