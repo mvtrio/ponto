@@ -29,6 +29,8 @@ export default function AppLayout() {
           que fica em /corrections — grupos entre parênteses não entram na URL. */}
       <Tabs.Screen name="request-correction" options={{ title: "Correções" }} />
       <Tabs.Screen name="profile" options={{ title: "Perfil" }} />
+      {/* href: null — acessível pelo Perfil, sem ocupar espaço no menu. */}
+      <Tabs.Screen name="change-password" options={{ href: null, title: "Alterar senha" }} />
     </Tabs>
   );
 }

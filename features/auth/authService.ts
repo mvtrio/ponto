@@ -1,3 +1,5 @@
+import { createClient } from "@supabase/supabase-js";
+
 import { supabase } from "../../lib/supabase";
 
 export async function signInWithPassword(email: string, password: string) {
@@ -19,6 +21,39 @@ export async function requestPasswordReset(email: string) {
 export async function updateOwnPassword(newPassword: string) {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw error;
+}
+
+/**
+ * Troca a senha exigindo a senha atual. O Supabase não valida a senha antiga em
+ * `updateUser`, então ela é conferida com um login em um cliente isolado (sem persistir
+ * sessão e com storageKey próprio) — assim a sessão ativa do usuário não é substituída
+ * nem disputa lock com o cliente principal.
+ */
+export async function changeOwnPassword(currentPassword: string, newPassword: string) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) throw new Error("Sessão inválida.");
+
+  const verifyClient = createClient(
+    process.env.EXPO_PUBLIC_SUPABASE_URL as string,
+    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        storageKey: `sb-temp-verify-${Date.now()}`,
+      },
+    }
+  );
+
+  const { error: verifyError } = await verifyClient.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+  if (verifyError) throw new Error("Senha atual incorreta.");
+
+  await updateOwnPassword(newPassword);
 }
 
 export async function updateOwnFullName(fullName: string) {

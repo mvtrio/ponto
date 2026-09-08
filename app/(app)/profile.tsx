@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
@@ -8,6 +9,7 @@ import { colors } from "../../lib/theme";
 
 export default function ProfileScreen() {
   const { profile, session } = useSession();
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -16,6 +18,11 @@ export default function ProfileScreen() {
         <Text style={styles.email}>{session?.user.email}</Text>
         <Text style={styles.role}>Papel: {profile?.role === "admin" ? "Administrador" : "Funcionário"}</Text>
       </Card>
+      <Button
+        label="Alterar senha"
+        variant="secondary"
+        onPress={() => router.push("/(app)/change-password")}
+      />
       <Button label="Sair" variant="danger" onPress={() => signOut()} />
     </View>
   );
