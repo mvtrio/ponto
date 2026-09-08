@@ -56,7 +56,18 @@ export async function createPunch(input: CreatePunchInput): Promise<Punch> {
     .select("*")
     .single();
 
-  if (error) throw error;
+  if (error) {
+    // 23505 = violação do índice punches_one_per_type_per_day: já existe uma marcação
+    // desse tipo no dia. A tela já bloqueia isso, mas o banco é a garantia real.
+    if (error.code === "23505") {
+      throw new Error(
+        input.type === "clock_in"
+          ? "Você já registrou a entrada de hoje."
+          : "Você já registrou a saída de hoje."
+      );
+    }
+    throw error;
+  }
 
   return data as unknown as Punch;
 }
