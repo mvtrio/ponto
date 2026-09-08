@@ -12,8 +12,11 @@ const STATUS_ICON: Record<DetailedDayRow["status"], { name: keyof typeof Ionicon
   holiday: { name: "flag", color: colors.accent },
 };
 
-const COLUMN_WIDTH = 90;
-const DATA_COLUMN_WIDTH = 150;
+// Dimensões generosas: a tabela é lida no dia a dia por quem enxerga mal, então
+// texto grande e linhas altas valem mais que caber tudo sem rolar.
+const COLUMN_WIDTH = 130;
+const DATA_COLUMN_WIDTH = 330;
+const STATUS_COLUMN_WIDTH = 90;
 const TIME_COLUMNS = [
   { key: "entrada", header: "Entrada" },
   { key: "saida", header: "Saída" },
@@ -47,7 +50,7 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View>
         <View style={styles.headerRow}>
-          <Cell width={44}>Status</Cell>
+          <Cell width={STATUS_COLUMN_WIDTH}>Status</Cell>
           <Cell width={DATA_COLUMN_WIDTH}>Data</Cell>
           {TIME_COLUMNS.map(({ header }) => (
             <Cell key={header} width={COLUMN_WIDTH}>
@@ -67,8 +70,8 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
 
           return (
             <View key={row.day} style={styles.row}>
-              <View style={[styles.cell, { width: 44, alignItems: "center" }]}>
-                <Ionicons name={icon.name} size={18} color={icon.color} />
+              <View style={[styles.cell, { width: STATUS_COLUMN_WIDTH, alignItems: "center" }]}>
+                <Ionicons name={icon.name} size={28} color={icon.color} />
               </View>
               <Cell width={DATA_COLUMN_WIDTH}>
                 {row.label}
@@ -95,19 +98,19 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
 const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: colors.border,
-    paddingBottom: 8,
+    paddingBottom: 12,
     marginBottom: 4,
   },
   row: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    paddingVertical: 10,
+    paddingVertical: 18,
   },
-  cell: { paddingHorizontal: 6, justifyContent: "center" },
-  cellText: { fontSize: 12, color: colors.textMuted },
+  cell: { paddingHorizontal: 8, justifyContent: "center" },
+  cellText: { fontSize: 20, color: colors.textMuted },
   cellTextBold: { fontWeight: "700" },
-  empty: { textAlign: "center", color: colors.textMuted, marginTop: 24, padding: 16 },
+  empty: { textAlign: "center", color: colors.textMuted, fontSize: 18, marginTop: 24, padding: 16 },
 });
