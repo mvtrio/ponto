@@ -27,8 +27,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
       const profile = await fetchProfile(session.user.id);
       if (profile && !profile.active) {
-        await supabase.auth.signOut();
         if (mounted) setState({ session: null, profile: null, loading: false });
+        // Chamar supabase.auth.signOut() de dentro do callback do onAuthStateChange trava o
+        // SDK (deadlock conhecido); adiar para o próximo tick evita isso.
+        setTimeout(() => {
+          supabase.auth.signOut();
+        }, 0);
         return;
       }
       if (mounted) setState({ session, profile, loading: false });

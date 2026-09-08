@@ -29,8 +29,14 @@ export interface NewEmployeeInput {
 export async function createEmployee(input: NewEmployeeInput): Promise<Profile> {
   const signUpUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
   const signUpKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
+  // storageKey próprio: evita colidir/disputar lock com o cliente principal (duas instâncias
+  // de GoTrueClient usando a mesma chave de storage podem travar operações concorrentes).
   const signUpClient = createClient(signUpUrl, signUpKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      storageKey: `sb-temp-signup-${Date.now()}`,
+    },
   });
 
   const { data, error } = await signUpClient.auth.signUp({
