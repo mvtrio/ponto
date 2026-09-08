@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   fetchCorrectionsByStatus,
+  fetchMyCorrections,
   fetchReviewedCorrections,
   type DetailedCorrection,
 } from "./correctionService";
@@ -39,4 +40,12 @@ export function usePendingCorrections() {
 
 export function useReviewedCorrections() {
   return useCorrectionList(loadReviewed, "Erro ao carregar o histórico de correções");
+}
+
+export function useMyCorrections(employeeId: string | undefined) {
+  const loader = useMemo(
+    () => (employeeId ? () => fetchMyCorrections(employeeId) : async () => []),
+    [employeeId]
+  );
+  return useCorrectionList(loader, "Erro ao carregar suas solicitações");
 }

@@ -25,6 +25,9 @@ export default function AppLayout() {
       <Tabs.Screen name="clock" options={{ title: "Bater ponto" }} />
       <Tabs.Screen name="history" options={{ title: "Histórico" }} />
       <Tabs.Screen name="bank" options={{ title: "Banco de horas" }} />
+      {/* Rota própria (não "corrections") para não colidir com a tela de correções do admin,
+          que fica em /corrections — grupos entre parênteses não entram na URL. */}
+      <Tabs.Screen name="request-correction" options={{ title: "Correções" }} />
       <Tabs.Screen name="profile" options={{ title: "Perfil" }} />
     </Tabs>
   );

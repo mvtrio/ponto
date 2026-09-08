@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { CorrectionRow, ReviewedCorrectionRow, TYPE_LABELS } from "../../components/admin/CorrectionRow";
+import { CorrectionRow, ReviewedCorrectionRow } from "../../components/admin/CorrectionRow";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
@@ -22,7 +22,7 @@ import { usePendingCorrections, useReviewedCorrections } from "../../features/co
 import { fetchPunchesForRange } from "../../features/punches/punchService";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
-import type { ActivePunchType, Profile, Punch } from "../../types/domain";
+import { PUNCH_TYPE_LABELS, type ActivePunchType, type Profile, type Punch } from "../../types/domain";
 
 const TYPE_OPTIONS: { label: string; value: ActivePunchType }[] = [
   { label: "Entrada", value: "clock_in" },
@@ -238,7 +238,7 @@ export default function CorrectionsScreen() {
                     style={[styles.chip, selected && styles.chipSelected]}
                   >
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {TYPE_LABELS[punch.type] ?? punch.type} {isoToTime(punch.occurred_at)}
+                      {PUNCH_TYPE_LABELS[punch.type] ?? punch.type} {isoToTime(punch.occurred_at)}
                     </Text>
                   </Pressable>
                 );

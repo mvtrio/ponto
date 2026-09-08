@@ -12,20 +12,13 @@ import {
   isoToTime,
 } from "../../features/corrections/datetime";
 import { colors } from "../../lib/theme";
-import type { ActivePunchType, CorrectionStatus } from "../../types/domain";
+import { PUNCH_TYPE_LABELS, type ActivePunchType, type CorrectionStatus } from "../../types/domain";
 import type { DetailedCorrection } from "../../features/corrections/correctionService";
 
 const TYPE_OPTIONS: { label: string; value: ActivePunchType }[] = [
   { label: "Entrada", value: "clock_in" },
   { label: "Saída", value: "clock_out" },
 ];
-
-export const TYPE_LABELS: Record<string, string> = {
-  clock_in: "Entrada",
-  clock_out: "Saída",
-  break_start: "Início do intervalo",
-  break_end: "Fim do intervalo",
-};
 
 const STATUS_LABELS: Record<CorrectionStatus, string> = {
   pending: "Pendente",
@@ -117,7 +110,7 @@ export function ReviewedCorrectionRow({ correction }: { correction: DetailedCorr
       <View style={styles.historyMain}>
         <Text style={styles.historyEmployee}>{correction.employeeName}</Text>
         <Text style={styles.detail}>
-          {TYPE_LABELS[correction.proposed_type] ?? correction.proposed_type} —{" "}
+          {PUNCH_TYPE_LABELS[correction.proposed_type] ?? correction.proposed_type} —{" "}
           {formatDateTime(correction.proposed_occurred_at)}
         </Text>
         <Text style={styles.reason}>{correction.reason}</Text>

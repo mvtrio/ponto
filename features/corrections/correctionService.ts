@@ -86,6 +86,19 @@ export async function fetchCorrectionsByStatus(
   return decorateCorrections((data ?? []) as unknown as Correction[]);
 }
 
+/** Solicitações do próprio funcionário, mais recentes primeiro (pendentes e já revisadas). */
+export async function fetchMyCorrections(employeeId: string, limit = 30): Promise<DetailedCorrection[]> {
+  const { data, error } = await supabase
+    .from("corrections")
+    .select("*")
+    .eq("employee_id", employeeId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return decorateCorrections((data ?? []) as unknown as Correction[]);
+}
+
 /** Histórico das correções já revisadas (aprovadas e rejeitadas), mais recentes primeiro. */
 export async function fetchReviewedCorrections(limit = 20): Promise<DetailedCorrection[]> {
   const { data, error } = await supabase

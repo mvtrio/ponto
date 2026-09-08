@@ -19,6 +19,14 @@ export type PunchType = "clock_in" | "clock_out" | "break_start" | "break_end";
 /** Tipos que o funcionário efetivamente marca hoje. */
 export type ActivePunchType = Extract<PunchType, "clock_in" | "clock_out">;
 
+/** Rótulos em português; inclui os tipos legados para exibir marcações antigas. */
+export const PUNCH_TYPE_LABELS: Record<PunchType, string> = {
+  clock_in: "Entrada",
+  clock_out: "Saída",
+  break_start: "Início do intervalo",
+  break_end: "Fim do intervalo",
+};
+
 export type PunchSource = "mobile" | "web" | "correction";
 
 export interface Punch {
