@@ -67,37 +67,39 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Definir nova senha</Text>
+      <View style={styles.form}>
+        <Text style={styles.title}>Definir nova senha</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="E-mail"
-        placeholderTextColor={colors.textFaint}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="E-mail"
+          placeholderTextColor={colors.textFaint}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nova senha"
-        placeholderTextColor={colors.textFaint}
-        secureTextEntry
-        autoCapitalize="none"
-        value={newPassword}
-        onChangeText={setNewPassword}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Nova senha"
+          placeholderTextColor={colors.textFaint}
+          secureTextEntry
+          autoCapitalize="none"
+          value={newPassword}
+          onChangeText={setNewPassword}
+        />
 
-      {message ? <Text style={styles.success}>{message}</Text> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+        {message ? <Text style={styles.success}>{message}</Text> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <View style={styles.actions}>
-        <View style={styles.action}>
-          <Button label="Cancelar" variant="secondary" onPress={handleCancel} disabled={loading} />
-        </View>
-        <View style={styles.action}>
-          <Button label="Salvar" onPress={handleSave} loading={loading} />
+        <View style={styles.actions}>
+          <View style={styles.action}>
+            <Button label="Cancelar" variant="secondary" onPress={handleCancel} disabled={loading} />
+          </View>
+          <View style={styles.action}>
+            <Button label="Salvar" onPress={handleSave} loading={loading} />
+          </View>
         </View>
       </View>
     </View>
@@ -105,7 +107,16 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: colors.background, gap: 12 },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+    backgroundColor: colors.background,
+  },
+  // Formulário estreito e centralizado: em tela larga não faz sentido esticar
+  // campos e botões de ponta a ponta.
+  form: { width: "100%", maxWidth: 360, gap: 12 },
   title: { fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 16, color: colors.text },
   input: {
     backgroundColor: colors.surface,
