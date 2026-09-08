@@ -58,7 +58,13 @@ export function useOvertimeSeries(
   return useSeries(fetchOvertimeSeries, employeeId, fromDate, toDate, granularity);
 }
 
-export function usePeriodOvertimeTotal(employeeId: string | undefined, fromDate: string, toDate: string) {
+/** `refreshKey` permite forçar uma recarga (ex.: logo após bater ponto). */
+export function usePeriodOvertimeTotal(
+  employeeId: string | undefined,
+  fromDate: string,
+  toDate: string,
+  refreshKey = 0
+) {
   const [totalMinutes, setTotalMinutes] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -79,7 +85,7 @@ export function usePeriodOvertimeTotal(employeeId: string | undefined, fromDate:
     return () => {
       cancelled = true;
     };
-  }, [employeeId, fromDate, toDate]);
+  }, [employeeId, fromDate, toDate, refreshKey]);
 
   return { totalMinutes, loading };
 }

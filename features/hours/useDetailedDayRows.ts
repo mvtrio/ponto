@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 
 import { fetchDetailedDayRows, type DetailedDayRow } from "./detailedDayRows";
 
-export function useDetailedDayRows(employeeId: string | undefined, fromDate: string, toDate: string) {
+/** `refreshKey` permite forçar uma recarga (ex.: logo após bater ponto). */
+export function useDetailedDayRows(
+  employeeId: string | undefined,
+  fromDate: string,
+  toDate: string,
+  refreshKey = 0
+) {
   const [rows, setRows] = useState<DetailedDayRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +31,7 @@ export function useDetailedDayRows(employeeId: string | undefined, fromDate: str
     return () => {
       cancelled = true;
     };
-  }, [employeeId, fromDate, toDate]);
+  }, [employeeId, fromDate, toDate, refreshKey]);
 
   return { rows, loading, error };
 }

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 
 import { fetchHourBankBalance } from "./hoursService";
 
-export function useHourBank(employeeId: string | undefined) {
+/** `refreshKey` permite forçar uma recarga (ex.: logo após bater ponto). */
+export function useHourBank(employeeId: string | undefined, refreshKey = 0) {
   const [balanceMinutes, setBalanceMinutes] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export function useHourBank(employeeId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [employeeId]);
+  }, [employeeId, refreshKey]);
 
   return { balanceMinutes, loading, error };
 }
