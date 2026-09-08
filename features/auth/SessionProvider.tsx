@@ -59,8 +59,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data }) => loadSession(data.session));
 
+    // loadSession consulta `profiles`, ou seja, faz uma chamada Supabase. Rodá-la dentro
+    // do callback trava o SDK pelo mesmo motivo do signOut acima: o callback segura o lock
+    // de auth enquanto a consulta espera por ele. Quando o evento é um TOKEN_REFRESHED, a
+    // renovação empaca, o SDK desiste e emite SIGNED_OUT — a sessão some sozinha no meio
+    // do uso e o app cai na tela de login. Adiar para o próximo tick solta o lock antes.
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      loadSession(nextSession);
+      setTimeout(() => loadSession(nextSession), 0);
     });
 
     return () => {
