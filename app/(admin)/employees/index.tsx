@@ -21,8 +21,9 @@ export default function EmployeesScreen() {
         setLoading(true);
         try {
           const employees = await fetchEmployees();
+          const staff = employees.filter((e) => e.role !== "admin");
           const withBalances = await Promise.all(
-            employees.map(async (e) => ({
+            staff.map(async (e) => ({
               id: e.id,
               fullName: e.full_name,
               employeeCode: e.employee_code,

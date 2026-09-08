@@ -28,7 +28,7 @@ export default function DashboardScreen() {
         setLoading(true);
         try {
           const employees = await fetchEmployees();
-          const active = employees.filter((e) => e.active);
+          const active = employees.filter((e) => e.active && e.role !== "admin");
           const withBalances = await Promise.all(
             active.map(async (e) => ({
               id: e.id,
