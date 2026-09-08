@@ -23,8 +23,11 @@ create index if not exists punches_pending_idx
 -- effective_punches é a fonte única do cálculo de horas: filtrando aqui, tanto
 -- daily_worked_minutes quanto daily_summary passam a ignorar pendentes e rejeitadas
 -- sem nenhuma outra alteração.
-drop view if exists public.effective_punches;
-create view public.effective_punches
+--
+-- create or replace (e não drop + create): a view daily_summary depende desta, e o drop
+-- falharia com "cannot drop view effective_punches because other objects depend on it".
+-- O replace é aceito porque as colunas novas de punches entram no fim da lista.
+create or replace view public.effective_punches
   with (security_invoker = true) as
   select * from public.punches
   where superseded_by is null and approval_status = 'approved';

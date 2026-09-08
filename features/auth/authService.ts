@@ -13,6 +13,11 @@ export async function signOut() {
   if (error) throw error;
 }
 
+/**
+ * Envio de link de recuperação por e-mail. A tela de redefinir senha não usa mais este
+ * fluxo (passou a definir a senha direto), mas ele segue disponível para reativar o
+ * envio por e-mail sem reescrever nada.
+ */
 export async function requestPasswordReset(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email);
   if (error) throw error;
