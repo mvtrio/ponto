@@ -5,8 +5,10 @@ import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } fro
 import { Button } from "../../components/ui/Button";
 import { colors } from "../../lib/theme";
 import { signInWithPassword } from "../../features/auth/authService";
+import { useSession } from "../../features/auth/useSession";
 
 export default function LoginScreen() {
+  const { deactivatedMessage, clearDeactivatedMessage } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,6 +16,7 @@ export default function LoginScreen() {
 
   async function handleSubmit() {
     setError(null);
+    clearDeactivatedMessage();
     setLoading(true);
     try {
       await signInWithPassword(email.trim(), password);
@@ -50,6 +53,7 @@ export default function LoginScreen() {
         onChangeText={setPassword}
       />
 
+      {deactivatedMessage ? <Text style={styles.error}>{deactivatedMessage}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Button label="Entrar" onPress={handleSubmit} loading={loading} disabled={!email || !password} />
