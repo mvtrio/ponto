@@ -32,35 +32,37 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Text style={styles.title}>Ponto</Text>
-      <Text style={styles.subtitle}>Entre com seu e-mail e senha</Text>
+      <View style={styles.form}>
+        <Text style={styles.title}>Ponto</Text>
+        <Text style={styles.subtitle}>Entre com seu e-mail e senha</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="E-mail"
-        placeholderTextColor={colors.textFaint}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        placeholderTextColor={colors.textFaint}
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="E-mail"
+          placeholderTextColor={colors.textFaint}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Senha"
+          placeholderTextColor={colors.textFaint}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      {deactivatedMessage ? <Text style={styles.error}>{deactivatedMessage}</Text> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+        {deactivatedMessage ? <Text style={styles.error}>{deactivatedMessage}</Text> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Button label="Entrar" onPress={handleSubmit} loading={loading} disabled={!email || !password} />
+        <Button label="Entrar" onPress={handleSubmit} loading={loading} disabled={!email || !password} />
 
-      <Link href="/(auth)/forgot-password" style={styles.link}>
-        Esqueci minha senha
-      </Link>
+        <Link href="/(auth)/forgot-password" style={styles.link}>
+          Esqueci minha senha
+        </Link>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -69,10 +71,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
     padding: 24,
     backgroundColor: colors.background,
-    gap: 12,
   },
+  // Mesmo container estreito da tela de redefinir senha, para as duas telas de
+  // autenticação ficarem consistentes em tela larga.
+  form: { width: "100%", maxWidth: 360, gap: 12 },
   title: {
     fontSize: 32,
     fontWeight: "700",
