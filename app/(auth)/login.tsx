@@ -17,6 +17,12 @@ export default function LoginScreen() {
   async function handleSubmit() {
     setError(null);
     clearDeactivatedMessage();
+
+    if (!email.trim() || !password) {
+      setError("Informe e-mail e senha.");
+      return;
+    }
+
     setLoading(true);
     try {
       await signInWithPassword(email.trim(), password);
@@ -57,7 +63,10 @@ export default function LoginScreen() {
         {deactivatedMessage ? <Text style={styles.error}>{deactivatedMessage}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Button label="Entrar" onPress={handleSubmit} loading={loading} disabled={!email || !password} />
+        {/* Sem `disabled` ligado ao estado: o autofill do Chrome preenche o input do DOM
+            sem disparar onChangeText, então o botão ficava travado com os campos
+            visivelmente preenchidos. A validação passou para o handleSubmit. */}
+        <Button label="Entrar" onPress={handleSubmit} loading={loading} />
 
         <Link href="/(auth)/forgot-password" style={styles.link}>
           Esqueci minha senha
