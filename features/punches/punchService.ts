@@ -1,9 +1,12 @@
 import { supabase } from "../../lib/supabase";
-import type { Punch, PunchType } from "../../types/domain";
+import type { ActivePunchType, Punch, PunchType } from "../../types/domain";
+
+/** Só entrada e saída são consideradas; intervalos antigos ficam de fora. */
+const ACTIVE_TYPES: ActivePunchType[] = ["clock_in", "clock_out"];
 
 export interface CreatePunchInput {
   employeeId: string;
-  type: PunchType;
+  type: ActivePunchType;
   latitude: number | null;
   longitude: number | null;
   locationAccuracyM: number | null;
@@ -28,43 +31,6 @@ async function uploadPhoto(employeeId: string, type: PunchType, occurredAt: Date
   });
   if (error) throw error;
   return path;
-}
-
-const LUNCH_BREAK_START_HOUR = 12;
-const LUNCH_BREAK_END_HOUR = 13;
-
-/**
- * Garante o intervalo de almoço automático (12:00–13:00) do dia, sem exigir marcação
- * manual. Idempotente: não duplica se o dia já tiver break_start/break_end.
- */
-async function ensureLunchBreak(employeeId: string, referenceDate: Date) {
-  const startOfDay = new Date(referenceDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(startOfDay);
-  endOfDay.setDate(endOfDay.getDate() + 1);
-
-  const { data: existing, error: fetchError } = await supabase
-    .from("effective_punches")
-    .select("type")
-    .eq("employee_id", employeeId)
-    .in("type", ["break_start", "break_end"])
-    .gte("occurred_at", startOfDay.toISOString())
-    .lt("occurred_at", endOfDay.toISOString());
-
-  if (fetchError) throw fetchError;
-  if (existing && existing.length > 0) return;
-
-  const breakStart = new Date(startOfDay);
-  breakStart.setHours(LUNCH_BREAK_START_HOUR, 0, 0, 0);
-  const breakEnd = new Date(startOfDay);
-  breakEnd.setHours(LUNCH_BREAK_END_HOUR, 0, 0, 0);
-
-  const { error: insertError } = await supabase.from("punches").insert([
-    { employee_id: employeeId, type: "break_start", occurred_at: breakStart.toISOString(), source: "mobile" },
-    { employee_id: employeeId, type: "break_end", occurred_at: breakEnd.toISOString(), source: "mobile" },
-  ]);
-
-  if (insertError) throw insertError;
 }
 
 export async function createPunch(input: CreatePunchInput): Promise<Punch> {
@@ -92,10 +58,6 @@ export async function createPunch(input: CreatePunchInput): Promise<Punch> {
 
   if (error) throw error;
 
-  if (input.type === "clock_in") {
-    await ensureLunchBreak(input.employeeId, occurredAt);
-  }
-
   return data as unknown as Punch;
 }
 
@@ -104,6 +66,7 @@ export async function fetchPunchesForRange(employeeId: string, fromIso: string, 
     .from("effective_punches")
     .select("*")
     .eq("employee_id", employeeId)
+    .in("type", ACTIVE_TYPES)
     .gte("occurred_at", fromIso)
     .lt("occurred_at", toIso)
     .order("occurred_at", { ascending: true });
@@ -112,32 +75,25 @@ export async function fetchPunchesForRange(employeeId: string, fromIso: string, 
   return (data ?? []) as unknown as Punch[];
 }
 
-/**
- * Última marcação de entrada/saída do dia (ignora os punches automáticos de intervalo,
- * que têm horário fixo e podem ficar no futuro em relação ao momento real da entrada).
- */
-export async function fetchLastPunchToday(employeeId: string): Promise<Punch | null> {
+/** Marcações de entrada/saída de hoje, em ordem cronológica. */
+export async function fetchTodayPunches(employeeId: string): Promise<Punch[]> {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(startOfDay);
+  endOfDay.setDate(endOfDay.getDate() + 1);
 
-  const { data, error } = await supabase
-    .from("effective_punches")
-    .select("*")
-    .eq("employee_id", employeeId)
-    .in("type", ["clock_in", "clock_out"])
-    .gte("occurred_at", startOfDay.toISOString())
-    .order("occurred_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return (data as unknown as Punch) ?? null;
+  return fetchPunchesForRange(employeeId, startOfDay.toISOString(), endOfDay.toISOString());
 }
 
 /**
- * O intervalo de almoço (12:00–13:00) é registrado automaticamente (ver ensureLunchBreak
- * em createPunch), então a marcação manual do funcionário alterna só entre entrada/saída.
+ * A jornada é um único par entrada/saída por dia: depois da saída não há próxima
+ * marcação (retorna `null`) e o dia fica encerrado.
  */
-export function nextPunchType(lastType: PunchType | null): PunchType {
-  return lastType === "clock_in" ? "clock_out" : "clock_in";
+export function nextPunchType(todayPunches: Punch[]): ActivePunchType | null {
+  const hasClockIn = todayPunches.some((p) => p.type === "clock_in");
+  const hasClockOut = todayPunches.some((p) => p.type === "clock_out");
+
+  if (!hasClockIn) return "clock_in";
+  if (!hasClockOut) return "clock_out";
+  return null;
 }

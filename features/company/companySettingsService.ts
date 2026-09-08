@@ -7,10 +7,17 @@ export async function fetchCompanySettings(): Promise<CompanySettings> {
   return data as unknown as CompanySettings;
 }
 
-export async function updateCompanySettings(standardDailyMinutes: number): Promise<CompanySettings> {
+export async function updateCompanySettings(
+  standardDailyMinutes: number,
+  breakMinutes: number
+): Promise<CompanySettings> {
   const { data, error } = await supabase
     .from("company_settings")
-    .update({ standard_daily_minutes: standardDailyMinutes, updated_at: new Date().toISOString() })
+    .update({
+      standard_daily_minutes: standardDailyMinutes,
+      break_minutes: breakMinutes,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", 1)
     .select("*")
     .single();

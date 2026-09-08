@@ -7,19 +7,22 @@ import { LocationBadge } from "../../components/clock/LocationBadge";
 import { DetailedPunchesTable } from "../../components/history/DetailedPunchesTable";
 import { captureLocation } from "../../features/capture/useLocation";
 import { capturePhoto } from "../../features/capture/useCameraCapture";
-import { createPunch, fetchLastPunchToday, nextPunchType } from "../../features/punches/punchService";
+import { createPunch, fetchTodayPunches, nextPunchType } from "../../features/punches/punchService";
 import { useDetailedDayRows } from "../../features/hours/useDetailedDayRows";
 import { useHourBank } from "../../features/hours/useHourBank";
 import { usePeriodOvertimeTotal } from "../../features/hours/useIndicators";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
-import { formatMinutes, type Punch, type PunchType } from "../../types/domain";
+import { formatMinutes, type ActivePunchType, type Punch } from "../../types/domain";
 
-const CONFIRM_LABELS: Record<PunchType, string> = {
+const CONFIRM_LABELS: Record<ActivePunchType, string> = {
   clock_in: "Entrada registrada com sucesso!",
-  break_start: "Início do intervalo registrado!",
-  break_end: "Fim do intervalo registrado!",
   clock_out: "Saída registrada com sucesso!",
+};
+
+const PUNCH_LABELS: Record<ActivePunchType, string> = {
+  clock_in: "Entrada",
+  clock_out: "Saída",
 };
 
 /** Janela padrão do banco de horas exibido na tela inicial do funcionário. */
@@ -31,9 +34,13 @@ function isoDaysAgo(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 export default function ClockScreen() {
   const { profile } = useSession();
-  const [lastPunch, setLastPunch] = useState<Punch | null>(null);
+  const [todayPunches, setTodayPunches] = useState<Punch[]>([]);
   const [loadingLast, setLoadingLast] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [locationStatus, setLocationStatus] = useState<"idle" | "capturing" | "captured" | "unavailable">("idle");
@@ -56,25 +63,25 @@ export default function ClockScreen() {
   const balance = balanceMinutes ?? 0;
   const balanceColor = balance >= 0 ? colors.success : colors.danger;
 
-  const reloadLastPunch = useCallback(async () => {
+  const reloadTodayPunches = useCallback(async () => {
     if (!profile) return;
     setLoadingLast(true);
     try {
-      const punch = await fetchLastPunchToday(profile.id);
-      setLastPunch(punch);
+      setTodayPunches(await fetchTodayPunches(profile.id));
     } finally {
       setLoadingLast(false);
     }
   }, [profile]);
 
   useEffect(() => {
-    reloadLastPunch();
-  }, [reloadLastPunch]);
+    reloadTodayPunches();
+  }, [reloadTodayPunches]);
 
-  const nextType: PunchType = nextPunchType(lastPunch?.type ?? null);
+  const nextType = nextPunchType(todayPunches);
+  const lastPunch = todayPunches.length ? todayPunches[todayPunches.length - 1] : null;
 
   async function handlePunch() {
-    if (!profile) return;
+    if (!profile || !nextType) return;
     setError(null);
     setSuccessMessage(null);
     setSubmitting(true);
@@ -96,7 +103,7 @@ export default function ClockScreen() {
         source: "mobile",
       });
 
-      await reloadLastPunch();
+      await reloadTodayPunches();
       setBankRefreshKey((key) => key + 1);
       setSuccessMessage(CONFIRM_LABELS[nextType]);
     } catch (err) {
@@ -114,9 +121,14 @@ export default function ClockScreen() {
           {loadingLast
             ? "Carregando última marcação…"
             : lastPunch
-            ? `Última marcação hoje: ${lastPunch.type} às ${new Date(lastPunch.occurred_at).toLocaleTimeString()}`
+            ? `Última marcação hoje: ${PUNCH_LABELS[lastPunch.type as ActivePunchType] ?? lastPunch.type} às ${formatTime(
+                lastPunch.occurred_at
+              )}`
             : "Nenhuma marcação hoje ainda"}
         </Text>
+        {!loadingLast && !nextType ? (
+          <Text style={styles.dayClosed}>Entrada e saída de hoje já registradas.</Text>
+        ) : null}
 
         <LocationBadge status={locationStatus} />
 
@@ -163,6 +175,7 @@ const styles = StyleSheet.create({
   card: { gap: 16 },
   greeting: { fontSize: 20, fontWeight: "700", color: colors.text },
   lastPunch: { fontSize: 14, color: colors.textMuted },
+  dayClosed: { fontSize: 13, color: colors.success },
   photoPreview: { width: 96, height: 96, borderRadius: 8, alignSelf: "center" },
   error: { color: colors.danger },
   success: { color: colors.success, fontWeight: "600" },

@@ -9,7 +9,16 @@ export interface Profile {
   created_at: string;
 }
 
-export type PunchType = "clock_in" | "break_start" | "break_end" | "clock_out";
+/**
+ * O funcionário bate apenas entrada e saída. `break_start`/`break_end` são legado:
+ * existem em registros antigos, mas não são mais criados nem considerados no cálculo
+ * (o intervalo virou o desconto fixo `CompanySettings.break_minutes`).
+ */
+export type PunchType = "clock_in" | "clock_out" | "break_start" | "break_end";
+
+/** Tipos que o funcionário efetivamente marca hoje. */
+export type ActivePunchType = Extract<PunchType, "clock_in" | "clock_out">;
+
 export type PunchSource = "mobile" | "web" | "correction";
 
 export interface Punch {
@@ -47,6 +56,8 @@ export interface Correction {
 export interface CompanySettings {
   id: 1;
   standard_daily_minutes: number;
+  /** Intervalo descontado automaticamente de cada dia fechado (não é marcado pelo funcionário). */
+  break_minutes: number;
   tolerance_minutes: number;
   work_week_days: number[];
   updated_at: string;

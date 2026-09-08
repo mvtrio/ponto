@@ -39,10 +39,9 @@ on conflict do nothing;
 
 update public.profiles set role = 'admin' where id = '11111111-1111-1111-1111-111111111111';
 
--- Alguns punches de exemplo para o Funcionário Um: ontem, jornada completa com almoço.
+-- Alguns punches de exemplo para o Funcionário Um: ontem, jornada completa.
+-- O intervalo não é marcado — é descontado via company_settings.break_minutes.
 insert into public.punches (employee_id, type, occurred_at, source)
 values
   ('22222222-2222-2222-2222-222222222222', 'clock_in', (current_date - 1) + time '08:00', 'mobile'),
-  ('22222222-2222-2222-2222-222222222222', 'break_start', (current_date - 1) + time '12:00', 'mobile'),
-  ('22222222-2222-2222-2222-222222222222', 'break_end', (current_date - 1) + time '13:00', 'mobile'),
   ('22222222-2222-2222-2222-222222222222', 'clock_out', (current_date - 1) + time '17:00', 'mobile');

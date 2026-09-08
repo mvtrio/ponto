@@ -11,24 +11,12 @@ export interface DetailedDayRow {
   label: string;
   status: DayStatus;
   holidayName?: string;
-  entrada1: string | null;
-  saida1: string | null;
-  entrada2: string | null;
-  saida2: string | null;
-  entrada3: string | null;
-  saida3: string | null;
+  entrada: string | null;
+  saida: string | null;
   balanceMinutes: number | null;
 }
 
 const WEEKDAYS = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
-const SLOTS: (keyof Pick<DetailedDayRow, "entrada1" | "saida1" | "entrada2" | "saida2" | "entrada3" | "saida3">)[] = [
-  "entrada1",
-  "saida1",
-  "entrada2",
-  "saida2",
-  "entrada3",
-  "saida3",
-];
 
 function formatDayLabel(day: string): string {
   const d = new Date(`${day}T00:00:00`);
@@ -54,8 +42,8 @@ function enumerateDaysDesc(fromDate: string, toDate: string): string[] {
 }
 
 /**
- * Lista detalhada dia a dia no período: horários de cada marcação (até 3 pares
- * entrada/saída), status (ok/atenção/folga) e saldo do dia.
+ * Lista detalhada dia a dia no período: o par entrada/saída do dia, status
+ * (ok/atenção/folga/feriado) e saldo do dia.
  */
 export async function fetchDetailedDayRows(
   employeeId: string,
@@ -90,14 +78,7 @@ export async function fetchDetailedDayRows(
     const isWorkDay = settings.work_week_days.includes(weekday);
     const label = formatDayLabel(day);
 
-    const emptyTimes: Record<(typeof SLOTS)[number], string | null> = {
-      entrada1: null,
-      saida1: null,
-      entrada2: null,
-      saida2: null,
-      entrada3: null,
-      saida3: null,
-    };
+    const emptyTimes = { entrada: null, saida: null };
 
     const holidayName = holidayByDay.get(day);
 
@@ -117,10 +98,12 @@ export async function fetchDetailedDayRows(
       };
     }
 
-    const times = { ...emptyTimes };
-    dayPunches.forEach((punch, i) => {
-      if (i < SLOTS.length) times[SLOTS[i]] = formatTime(punch.occurred_at);
-    });
+    const clockIn = dayPunches.find((p) => p.type === "clock_in");
+    const clockOut = dayPunches.find((p) => p.type === "clock_out");
+    const times = {
+      entrada: clockIn ? formatTime(clockIn.occurred_at) : null,
+      saida: clockOut ? formatTime(clockOut.occurred_at) : null,
+    };
 
     const balanceMinutes = summary?.balance_minutes ?? null;
     const isIncomplete = summary?.is_incomplete ?? true;

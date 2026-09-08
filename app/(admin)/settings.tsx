@@ -12,6 +12,7 @@ import { colors } from "../../lib/theme";
 export default function SettingsScreen() {
   const { profile, session } = useSession();
   const [standardHours, setStandardHours] = useState("8");
+  const [breakMinutes, setBreakMinutes] = useState("60");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -49,7 +50,10 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     fetchCompanySettings()
-      .then((settings) => setStandardHours((settings.standard_daily_minutes / 60).toString()))
+      .then((settings) => {
+        setStandardHours((settings.standard_daily_minutes / 60).toString());
+        setBreakMinutes(String(settings.break_minutes));
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro ao carregar configurações"))
       .finally(() => setLoading(false));
   }, []);
@@ -64,7 +68,16 @@ export default function SettingsScreen() {
     setSaving(true);
     try {
       const hours = Number(standardHours.replace(",", "."));
-      await updateCompanySettings(Math.round(hours * 60));
+      const breaks = Number(breakMinutes.replace(",", "."));
+      if (!Number.isFinite(hours) || hours <= 0) {
+        setError("Informe uma jornada diária válida.");
+        return;
+      }
+      if (!Number.isFinite(breaks) || breaks < 0) {
+        setError("Informe um intervalo válido (0 ou mais minutos).");
+        return;
+      }
+      await updateCompanySettings(Math.round(hours * 60), Math.round(breaks));
       setMessage("Configurações salvas.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
@@ -156,9 +169,23 @@ export default function SettingsScreen() {
           editable={!loading}
           placeholderTextColor={colors.textFaint}
         />
+        <Text style={styles.label}>Intervalo descontado por dia (minutos)</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="number-pad"
+          value={breakMinutes}
+          onChangeText={setBreakMinutes}
+          editable={!loading}
+          placeholderTextColor={colors.textFaint}
+        />
+        <Text style={styles.hint}>
+          O funcionário bate apenas entrada e saída. O intervalo não é marcado: estes minutos são descontados
+          automaticamente de todo dia com entrada e saída registradas.
+        </Text>
+
         {message ? <Text style={styles.success}>{message}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button label="Salvar" onPress={handleSave} loading={loading} disabled={loading} />
+        <Button label="Salvar" onPress={handleSave} loading={saving} disabled={loading} />
       </Card>
 
       <Card style={styles.card}>

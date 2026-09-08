@@ -14,8 +14,10 @@ const STATUS_ICON: Record<DetailedDayRow["status"], { name: keyof typeof Ionicon
 
 const COLUMN_WIDTH = 90;
 const DATA_COLUMN_WIDTH = 150;
-const TIME_COLUMNS = ["entrada1", "saida1", "entrada2", "saida2", "entrada3", "saida3"] as const;
-const TIME_HEADERS = ["Entrada 1", "Saída 1", "Entrada 2", "Saída 2", "Entrada 3", "Saída 3"];
+const TIME_COLUMNS = [
+  { key: "entrada", header: "Entrada" },
+  { key: "saida", header: "Saída" },
+] as const;
 
 function Cell({
   children,
@@ -47,7 +49,7 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
         <View style={styles.headerRow}>
           <Cell width={44}>Status</Cell>
           <Cell width={DATA_COLUMN_WIDTH}>Data</Cell>
-          {TIME_HEADERS.map((header) => (
+          {TIME_COLUMNS.map(({ header }) => (
             <Cell key={header} width={COLUMN_WIDTH}>
               {header}
             </Cell>
@@ -72,7 +74,7 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
                 {row.label}
                 {isHoliday && row.holidayName ? ` · ${row.holidayName}` : ""}
               </Cell>
-              {TIME_COLUMNS.map((key) => (
+              {TIME_COLUMNS.map(({ key }) => (
                 <Cell key={key} width={COLUMN_WIDTH} color={timeColor}>
                   {isFolga ? "FOLGA" : isHoliday ? "FERIADO" : row[key] ?? "—"}
                 </Cell>
