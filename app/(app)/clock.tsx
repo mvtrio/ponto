@@ -101,8 +101,11 @@ export default function ClockScreen() {
 
   // Enquanto o dia não carregou (ou falhou), não há próxima marcação confiável.
   const nextType = loadError || loadingLast ? null : nextPunchType(todayPunches);
-  const lastPunch = todayPunches.length ? todayPunches[todayPunches.length - 1] : null;
+  // "Última marcação" ignora as recusadas: elas têm seu próprio aviso e não valem.
+  const validToday = todayPunches.filter((p) => p.approval_status !== "rejected");
+  const lastPunch = validToday.length ? validToday[validToday.length - 1] : null;
   const pendingToday = todayPunches.filter((p) => p.approval_status === "pending");
+  const rejectedToday = todayPunches.filter((p) => p.approval_status === "rejected");
 
   async function handlePunch() {
     if (!profile || !nextType) return;
@@ -192,6 +195,20 @@ export default function ClockScreen() {
           </View>
         ) : null}
 
+        {rejectedToday.length > 0 ? (
+          <View style={styles.rejectedBox}>
+            <Text style={styles.rejectedTitle}>Marcação recusada pelo administrador</Text>
+            {rejectedToday.map((punch) => (
+              <Text key={punch.id} style={styles.pendingItem}>
+                • {PUNCH_TYPE_LABELS[punch.type]} às {appTime(punch.occurred_at)}
+              </Text>
+            ))}
+            <Text style={styles.pendingHint}>
+              Ela não conta no banco de horas. Você pode marcar de novo ou pedir uma correção.
+            </Text>
+          </View>
+        ) : null}
+
         {/* No web não há captura de localização, então o aviso só confundiria. */}
         {Platform.OS === "web" ? null : <LocationBadge status={locationStatus} />}
 
@@ -261,6 +278,15 @@ const styles = StyleSheet.create({
   pendingTitle: { fontSize: 16, fontWeight: "700", color: colors.warning },
   pendingItem: { fontSize: 16, color: colors.text },
   pendingHint: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  rejectedBox: {
+    gap: 4,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: colors.surfaceAlt,
+  },
+  rejectedTitle: { fontSize: 16, fontWeight: "700", color: colors.danger },
   photoPreview: { width: 96, height: 96, borderRadius: 8, alignSelf: "center" },
   error: { color: colors.danger },
   success: { color: colors.success, fontWeight: "600" },

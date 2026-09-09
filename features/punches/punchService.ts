@@ -75,10 +75,13 @@ export async function createPunch(input: CreatePunchInput): Promise<Punch> {
 }
 
 /**
- * Marcações vigentes do período para exibição — inclui as pendentes de aprovação, que
- * aparecem nas telas com o status, mas ainda não contam no cálculo de horas. Por isso lê
- * de `punches` e não de `effective_punches` (que só traz as aprovadas). Rejeitadas ficam
- * de fora: para efeito de tela é como se nunca tivessem sido batidas.
+ * Marcações do período para exibição, com o status de cada uma — inclui pendentes e
+ * rejeitadas. Lê de `punches` e não de `effective_punches` (que só traz aprovadas)
+ * justamente para a tela poder mostrar o que ainda não conta e o que foi recusado.
+ *
+ * Rejeitada aparecendo é intencional: sumir em silêncio é pior que um aviso, ainda mais
+ * para quem depende do banco de horas. Quem decide ignorá-las é cada consumidor —
+ * `nextPunchType`, por exemplo, as descarta para liberar nova marcação.
  */
 export async function fetchPunchesForRange(employeeId: string, fromIso: string, toIso: string): Promise<Punch[]> {
   const { data, error } = await supabase
@@ -86,7 +89,6 @@ export async function fetchPunchesForRange(employeeId: string, fromIso: string, 
     .select("*")
     .eq("employee_id", employeeId)
     .is("superseded_by", null)
-    .neq("approval_status", "rejected")
     .in("type", ACTIVE_TYPES)
     .gte("occurred_at", fromIso)
     .lt("occurred_at", toIso)

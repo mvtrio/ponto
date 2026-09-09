@@ -86,6 +86,10 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
                 <Cell width={COLUMN_WIDTH} color={colors.warning}>
                   aguardando
                 </Cell>
+              ) : row.hasRejected ? (
+                <Cell width={COLUMN_WIDTH} color={colors.danger}>
+                  recusada
+                </Cell>
               ) : (
                 <Cell width={COLUMN_WIDTH} color={balanceColor} bold>
                   {row.balanceMinutes && row.balanceMinutes !== 0 ? formatMinutes(row.balanceMinutes) : ""}
