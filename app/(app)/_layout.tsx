@@ -5,10 +5,13 @@ import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
 
 export default function AppLayout() {
-  const { session, loading } = useSession();
+  const { session, profile, loading } = useSession();
 
   if (loading) return <LoadingScreen />;
   if (!session) return <Redirect href="/(auth)/login" />;
+  // O admin só administra: não bate ponto. Sem esta checagem ele veria a tela de marcação
+  // ao abrir /clock direto pela URL — o redirecionamento de index.tsx só cobre a raiz.
+  if (profile?.role === "admin") return <Redirect href="/(admin)/dashboard" />;
 
   return (
     <Tabs
