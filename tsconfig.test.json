@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // O runner do Node executa os .ts direto, então os imports mantêm a extensão.
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["**/*.test.ts", "lib/**/*.ts", "features/**/*.ts", "types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

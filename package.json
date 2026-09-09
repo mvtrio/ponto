@@ -37,7 +37,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build:web": "expo export -p web",
-    "test": "node --test \"lib/*.test.ts\" \"features/**/*.test.ts\" \"types/*.test.ts\""
+    "test": "node --test \"lib/*.test.ts\" \"features/**/*.test.ts\" \"types/*.test.ts\"",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json"
   },
   "private": true,
   "engines": {
