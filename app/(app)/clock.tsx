@@ -68,6 +68,7 @@ export default function ClockScreen() {
 
   const balance = balanceMinutes ?? 0;
   const balanceColor = balance >= 0 ? colors.success : colors.danger;
+  const pendingDays = bankRows.filter((row) => row.hasPending).length;
 
   const reloadTodayPunches = useCallback(async () => {
     if (!profile) return;
@@ -186,6 +187,13 @@ export default function ClockScreen() {
           </View>
         </View>
 
+        {pendingDays > 0 ? (
+          <Text style={styles.bankPendingNote}>
+            {pendingDays === 1 ? "1 dia aguarda" : `${pendingDays} dias aguardam`} aprovação do administrador e
+            ainda não entra{pendingDays === 1 ? "" : "m"} no saldo.
+          </Text>
+        ) : null}
+
         {loadingBank ? (
           <Text style={styles.bankLoading}>Carregando banco de horas…</Text>
         ) : (
@@ -228,4 +236,5 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 17, color: colors.textMuted },
   totalValue: { fontSize: 44, fontWeight: "700" },
   bankLoading: { fontSize: 18, color: colors.textMuted },
+  bankPendingNote: { fontSize: 17, color: colors.warning },
 });

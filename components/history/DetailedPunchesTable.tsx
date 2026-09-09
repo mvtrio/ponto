@@ -82,9 +82,15 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
                   {isFolga ? "FOLGA" : isHoliday ? "FERIADO" : row[key] ?? "—"}
                 </Cell>
               ))}
-              <Cell width={COLUMN_WIDTH} color={balanceColor} bold>
-                {row.balanceMinutes && row.balanceMinutes !== 0 ? formatMinutes(row.balanceMinutes) : ""}
-              </Cell>
+              {row.hasPending ? (
+                <Cell width={COLUMN_WIDTH} color={colors.warning}>
+                  aguardando
+                </Cell>
+              ) : (
+                <Cell width={COLUMN_WIDTH} color={balanceColor} bold>
+                  {row.balanceMinutes && row.balanceMinutes !== 0 ? formatMinutes(row.balanceMinutes) : ""}
+                </Cell>
+              )}
             </View>
           );
         })}

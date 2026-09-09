@@ -14,6 +14,8 @@ export interface DetailedDayRow {
   entrada: string | null;
   saida: string | null;
   balanceMinutes: number | null;
+  /** Dia com marcações ainda não aprovadas — por isso não entra no saldo. */
+  hasPending: boolean;
 }
 
 const WEEKDAYS = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
@@ -78,7 +80,7 @@ export async function fetchDetailedDayRows(
     const isWorkDay = settings.work_week_days.includes(weekday);
     const label = formatDayLabel(day);
 
-    const emptyTimes = { entrada: null, saida: null };
+    const emptyTimes = { entrada: null, saida: null, hasPending: false };
 
     const holidayName = holidayByDay.get(day);
 
@@ -100,6 +102,9 @@ export async function fetchDetailedDayRows(
 
     const clockIn = dayPunches.find((p) => p.type === "clock_in");
     const clockOut = dayPunches.find((p) => p.type === "clock_out");
+    // Marcação pendente não entra em effective_punches, logo não gera saldo. Sinalizar o
+    // dia evita que a tela pareça quebrada: o horário aparece e o saldo fica vazio.
+    const hasPending = dayPunches.some((p) => p.approval_status === "pending");
     const times = {
       entrada: clockIn ? formatTime(clockIn.occurred_at) : null,
       saida: clockOut ? formatTime(clockOut.occurred_at) : null,
@@ -109,6 +114,6 @@ export async function fetchDetailedDayRows(
     const isIncomplete = summary?.is_incomplete ?? true;
     const status: DayStatus = isIncomplete || (balanceMinutes !== null && balanceMinutes < 0) ? "warning" : "ok";
 
-    return { day, label, status, holidayName, ...times, balanceMinutes };
+    return { day, label, status, holidayName, ...times, balanceMinutes, hasPending };
   });
 }
