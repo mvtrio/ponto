@@ -1,7 +1,11 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    // Módulos puros compartilhados com os testes importam com extensão .ts explícita,
+    // porque o runner do Node (ESM) não resolve caminho sem extensão. O bundle é feito
+    // por Metro/Babel, então o tsc aqui só verifica tipos.
+    "allowImportingTsExtensions": true
   },
   // Os testes rodam no Node (node --test), não no bundle do app: importam "node:test" e
   // usam extensão .ts explícita, que o tsconfig do Expo não aceita. São verificados à

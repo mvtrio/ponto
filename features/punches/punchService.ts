@@ -98,6 +98,24 @@ export async function fetchPunchesForRange(employeeId: string, fromIso: string, 
   return (data ?? []) as unknown as Punch[];
 }
 
+/**
+ * Marcações de todos os funcionários no período, em uma consulta só (uso do admin).
+ * Inclui pendentes e recusadas, com o status — é o que a visão geral precisa mostrar.
+ */
+export async function fetchPunchesForRangeAll(fromIso: string, toIso: string): Promise<Punch[]> {
+  const { data, error } = await supabase
+    .from("punches")
+    .select("*")
+    .is("superseded_by", null)
+    .in("type", ACTIVE_TYPES)
+    .gte("occurred_at", fromIso)
+    .lt("occurred_at", toIso)
+    .order("occurred_at", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as Punch[];
+}
+
 /** Marcações pendentes de aprovação, de todos os funcionários (uso do admin). */
 export async function fetchPendingPunches(limit = 100): Promise<Punch[]> {
   const { data, error } = await supabase
