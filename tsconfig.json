@@ -6,5 +6,9 @@
   // Os testes rodam no Node (node --test), não no bundle do app: importam "node:test" e
   // usam extensão .ts explícita, que o tsconfig do Expo não aceita. São verificados à
   // parte, por tsconfig.test.json.
-  "exclude": ["**/*.test.ts"]
+  "exclude": [
+    "**/*.test.ts",
+    // Edge function: roda em Deno (globais e imports por URL), não no bundle do app.
+    "supabase/functions/**"
+  ]
 }
