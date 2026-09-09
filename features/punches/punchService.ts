@@ -1,4 +1,5 @@
 import { appDayRange, appToday } from "../../lib/appDate";
+export { nextPunchType } from "./punchRules";
 import { supabase } from "../../lib/supabase";
 import type { ActivePunchType, Punch, PunchType } from "../../types/domain";
 
@@ -124,15 +125,3 @@ export async function fetchTodayPunches(employeeId: string): Promise<Punch[]> {
   return fetchPunchesForRange(employeeId, fromIso, toIso);
 }
 
-/**
- * A jornada é um único par entrada/saída por dia: depois da saída não há próxima
- * marcação (retorna `null`) e o dia fica encerrado.
- */
-export function nextPunchType(todayPunches: Punch[]): ActivePunchType | null {
-  const hasClockIn = todayPunches.some((p) => p.type === "clock_in");
-  const hasClockOut = todayPunches.some((p) => p.type === "clock_out");
-
-  if (!hasClockIn) return "clock_in";
-  if (!hasClockOut) return "clock_out";
-  return null;
-}

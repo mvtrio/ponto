@@ -36,7 +36,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:web": "expo export -p web"
+    "build:web": "expo export -p web",
+    "test": "node --test \"lib/*.test.ts\" \"features/**/*.test.ts\" \"types/*.test.ts\""
   },
   "private": true,
   "engines": {
