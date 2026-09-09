@@ -2,6 +2,7 @@ import { fetchCompanySettings } from "../company/companySettingsService";
 import { fetchHolidays } from "../company/holidaysService";
 import { fetchPunchesForRange } from "../punches/punchService";
 import { fetchDailySummaries } from "./hoursService";
+import { addDays, appDate, appTime, appWeekday, startOfAppDay } from "../../lib/appDate";
 import type { Punch } from "../../types/domain";
 
 export type DayStatus = "ok" | "warning" | "folga" | "holiday";
@@ -21,24 +22,16 @@ export interface DetailedDayRow {
 const WEEKDAYS = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
 
 function formatDayLabel(day: string): string {
-  const d = new Date(`${day}T00:00:00`);
-  const weekday = WEEKDAYS[d.getDay()];
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  return `${weekday}, ${dd}/${mm}`;
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const [, mm, dd] = day.split("-");
+  return `${WEEKDAYS[appWeekday(day)]}, ${dd}/${mm}`;
 }
 
 function enumerateDaysDesc(fromDate: string, toDate: string): string[] {
   const days: string[] = [];
-  const cursor = new Date(`${toDate}T00:00:00`);
-  const end = new Date(`${fromDate}T00:00:00`);
-  while (cursor >= end) {
-    days.push(cursor.toISOString().slice(0, 10));
-    cursor.setDate(cursor.getDate() - 1);
+  let cursor = toDate;
+  while (cursor >= fromDate) {
+    days.push(cursor);
+    cursor = addDays(cursor, -1);
   }
   return days;
 }
@@ -52,12 +45,10 @@ export async function fetchDetailedDayRows(
   fromDate: string,
   toDate: string
 ): Promise<DetailedDayRow[]> {
-  const toDateExclusive = new Date(`${toDate}T00:00:00`);
-  toDateExclusive.setDate(toDateExclusive.getDate() + 1);
-
   const [summaries, punches, settings, holidays] = await Promise.all([
     fetchDailySummaries(employeeId, fromDate, toDate),
-    fetchPunchesForRange(employeeId, `${fromDate}T00:00:00.000Z`, toDateExclusive.toISOString()),
+    // Limites do dia no fuso do sistema: o dia local não começa à meia-noite UTC.
+    fetchPunchesForRange(employeeId, startOfAppDay(fromDate), startOfAppDay(addDays(toDate, 1))),
     fetchCompanySettings(),
     fetchHolidays(fromDate, toDate).catch(() => []),
   ]);
@@ -67,7 +58,9 @@ export async function fetchDetailedDayRows(
 
   const punchesByDay = new Map<string, Punch[]>();
   for (const punch of punches) {
-    const day = punch.occurred_at.slice(0, 10);
+    // appDate e não slice(0, 10): o corte cru pega a data em UTC, jogando uma marcação
+    // do fim da tarde para o dia seguinte.
+    const day = appDate(punch.occurred_at);
     const list = punchesByDay.get(day) ?? [];
     list.push(punch);
     punchesByDay.set(day, list);
@@ -76,7 +69,7 @@ export async function fetchDetailedDayRows(
   return enumerateDaysDesc(fromDate, toDate).map((day) => {
     const dayPunches = (punchesByDay.get(day) ?? []).sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
     const summary = summaryByDay.get(day);
-    const weekday = new Date(`${day}T00:00:00`).getDay();
+    const weekday = appWeekday(day);
     const isWorkDay = settings.work_week_days.includes(weekday);
     const label = formatDayLabel(day);
 
@@ -106,8 +99,8 @@ export async function fetchDetailedDayRows(
     // dia evita que a tela pareça quebrada: o horário aparece e o saldo fica vazio.
     const hasPending = dayPunches.some((p) => p.approval_status === "pending");
     const times = {
-      entrada: clockIn ? formatTime(clockIn.occurred_at) : null,
-      saida: clockOut ? formatTime(clockOut.occurred_at) : null,
+      entrada: clockIn ? appTime(clockIn.occurred_at) : null,
+      saida: clockOut ? appTime(clockOut.occurred_at) : null,
     };
 
     const balanceMinutes = summary?.balance_minutes ?? null;

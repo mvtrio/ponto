@@ -1,3 +1,4 @@
+import { appDayRange, appToday } from "../../lib/appDate";
 import { supabase } from "../../lib/supabase";
 import type { ActivePunchType, Punch, PunchType } from "../../types/domain";
 
@@ -117,14 +118,10 @@ export async function reviewPunch(punchId: string, approve: boolean): Promise<Pu
   return data as unknown as Punch;
 }
 
-/** Marcações de entrada/saída de hoje, em ordem cronológica. */
+/** Marcações de entrada/saída de hoje, em ordem cronológica (dia no fuso do sistema). */
 export async function fetchTodayPunches(employeeId: string): Promise<Punch[]> {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(startOfDay);
-  endOfDay.setDate(endOfDay.getDate() + 1);
-
-  return fetchPunchesForRange(employeeId, startOfDay.toISOString(), endOfDay.toISOString());
+  const { fromIso, toIso } = appDayRange(appToday());
+  return fetchPunchesForRange(employeeId, fromIso, toIso);
 }
 
 /**

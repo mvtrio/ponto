@@ -17,17 +17,12 @@ import { useHourBank } from "../../../features/hours/useHourBank";
 import { colors } from "../../../lib/theme";
 import type { Role } from "../../../types/domain";
 import { formatMinutes } from "../../../types/domain";
-
-function isoDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
-}
+import { appDaysAgo } from "../../../lib/appDate";
 
 export default function EmployeeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const fromDate = isoDaysAgo(30);
-  const toDate = isoDaysAgo(0);
+  const fromDate = appDaysAgo(30);
+  const toDate = appDaysAgo(0);
   const { summaries, loading, error } = useDailySummaries(id, fromDate, toDate);
   const { balanceMinutes } = useHourBank(id);
 

@@ -14,6 +14,7 @@ import { useDetailedDayRows } from "../../features/hours/useDetailedDayRows";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
 import { formatMinutes } from "../../types/domain";
+import { appDaysAgo } from "../../lib/appDate";
 
 type ViewMode = "summary" | "full";
 
@@ -22,17 +23,11 @@ const VIEW_OPTIONS: { label: string; value: ViewMode }[] = [
   { label: "Completo", value: "full" },
 ];
 
-function isoDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
-}
-
 export default function BankScreen() {
   const { profile } = useSession();
   const [viewMode, setViewMode] = useState<ViewMode>("summary");
-  const [fromDate, setFromDate] = useState(isoDaysAgo(9));
-  const [toDate, setToDate] = useState(isoDaysAgo(0));
+  const [fromDate, setFromDate] = useState(appDaysAgo(9));
+  const [toDate, setToDate] = useState(appDaysAgo(0));
   const [balanceGranularity, setBalanceGranularity] = useState<Granularity>("day");
   const [overtimeGranularity, setOvertimeGranularity] = useState<Granularity>("day");
 

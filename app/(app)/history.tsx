@@ -4,17 +4,12 @@ import { DaySummaryCard } from "../../components/history/DaySummaryCard";
 import { useDailySummaries } from "../../features/hours/useDailySummary";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
-
-function isoDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
-}
+import { appDaysAgo } from "../../lib/appDate";
 
 export default function HistoryScreen() {
   const { profile } = useSession();
-  const fromDate = isoDaysAgo(30);
-  const toDate = isoDaysAgo(0);
+  const fromDate = appDaysAgo(30);
+  const toDate = appDaysAgo(0);
   const { summaries, loading, error } = useDailySummaries(profile?.id, fromDate, toDate);
 
   return (

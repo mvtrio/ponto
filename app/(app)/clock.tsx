@@ -14,6 +14,7 @@ import { useHourBank } from "../../features/hours/useHourBank";
 import { usePeriodOvertimeTotal } from "../../features/hours/useIndicators";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
+import { appDaysAgo, appTime } from "../../lib/appDate";
 import {
   PUNCH_TYPE_LABELS,
   formatMinutes,
@@ -34,16 +35,6 @@ const PUNCH_LABELS: Record<ActivePunchType, string> = {
 /** Janela padrão do banco de horas exibido na tela inicial do funcionário. */
 const BANK_WINDOW_DAYS = 30;
 
-function isoDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
 export default function ClockScreen() {
   const { profile } = useSession();
   const [todayPunches, setTodayPunches] = useState<Punch[]>([]);
@@ -55,7 +46,7 @@ export default function ClockScreen() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [bankRefreshKey, setBankRefreshKey] = useState(0);
 
-  const [fromDate, toDate] = useMemo(() => [isoDaysAgo(BANK_WINDOW_DAYS - 1), isoDaysAgo(0)], []);
+  const [fromDate, toDate] = useMemo(() => [appDaysAgo(BANK_WINDOW_DAYS - 1), appDaysAgo(0)], []);
 
   const { balanceMinutes, loading: loadingBalance } = useHourBank(profile?.id, bankRefreshKey);
   const { totalMinutes: overtimeTotal } = usePeriodOvertimeTotal(profile?.id, fromDate, toDate, bankRefreshKey);
@@ -136,7 +127,7 @@ export default function ClockScreen() {
           {loadingLast
             ? "Carregando última marcação…"
             : lastPunch
-            ? `Última marcação hoje: ${PUNCH_LABELS[lastPunch.type as ActivePunchType] ?? lastPunch.type} às ${formatTime(
+            ? `Última marcação hoje: ${PUNCH_LABELS[lastPunch.type as ActivePunchType] ?? lastPunch.type} às ${appTime(
                 lastPunch.occurred_at
               )}`
             : "Nenhuma marcação hoje ainda"}
@@ -150,7 +141,7 @@ export default function ClockScreen() {
             <Text style={styles.pendingTitle}>Aguardando aprovação do administrador</Text>
             {pendingToday.map((punch) => (
               <Text key={punch.id} style={styles.pendingItem}>
-                • {PUNCH_TYPE_LABELS[punch.type]} às {formatTime(punch.occurred_at)}
+                • {PUNCH_TYPE_LABELS[punch.type]} às {appTime(punch.occurred_at)}
               </Text>
             ))}
             <Text style={styles.pendingHint}>

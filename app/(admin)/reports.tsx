@@ -9,18 +9,13 @@ import { exportPdf } from "../../features/export/pdfExport";
 import { fetchDailySummaries } from "../../features/hours/hoursService";
 import { colors } from "../../lib/theme";
 import type { Profile } from "../../types/domain";
-
-function isoDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
-}
+import { appDaysAgo } from "../../lib/appDate";
 
 export default function ReportsScreen() {
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [fromDate, setFromDate] = useState(isoDaysAgo(30));
-  const [toDate, setToDate] = useState(isoDaysAgo(0));
+  const [fromDate, setFromDate] = useState(appDaysAgo(30));
+  const [toDate, setToDate] = useState(appDaysAgo(0));
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
