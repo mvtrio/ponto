@@ -17,17 +17,24 @@ function useSeries(
 ) {
   const [points, setPoints] = useState<ChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!employeeId) return;
     let cancelled = false;
     setLoading(true);
+    setError(null);
     fetcher(employeeId, fromDate, toDate, granularity)
       .then((data) => {
         if (!cancelled) setPoints(data);
       })
-      .catch(() => {
-        if (!cancelled) setPoints([]);
+      .catch((err) => {
+        // Antes o catch zerava a série em silêncio: um gráfico vazio por falha de rede
+        // ficava idêntico a um período sem marcações.
+        if (!cancelled) {
+          setPoints([]);
+          setError(err instanceof Error ? err.message : "Erro ao carregar os indicadores");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -37,7 +44,7 @@ function useSeries(
     };
   }, [employeeId, fromDate, toDate, granularity]);
 
-  return { points, loading };
+  return { points, loading, error };
 }
 
 export function useBalanceSeries(
@@ -65,19 +72,25 @@ export function usePeriodOvertimeTotal(
   toDate: string,
   refreshKey = 0
 ) {
-  const [totalMinutes, setTotalMinutes] = useState(0);
+  const [totalMinutes, setTotalMinutes] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!employeeId) return;
     let cancelled = false;
     setLoading(true);
+    setError(null);
     fetchPeriodOvertimeTotal(employeeId, fromDate, toDate)
       .then((total) => {
         if (!cancelled) setTotalMinutes(total);
       })
-      .catch(() => {
-        if (!cancelled) setTotalMinutes(0);
+      .catch((err) => {
+        // `null` e não 0: zero de horas extras é um resultado válido, falha não é.
+        if (!cancelled) {
+          setTotalMinutes(null);
+          setError(err instanceof Error ? err.message : "Erro ao calcular as horas extras");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -87,5 +100,5 @@ export function usePeriodOvertimeTotal(
     };
   }, [employeeId, fromDate, toDate, refreshKey]);
 
-  return { totalMinutes, loading };
+  return { totalMinutes, loading, error };
 }

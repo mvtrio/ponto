@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Image, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { ClockButton } from "../../components/clock/ClockButton";
 import { LiveClock } from "../../components/clock/LiveClock";
@@ -44,18 +45,31 @@ export default function ClockScreen() {
   const [lastPhotoUri, setLastPhotoUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [bankRefreshKey, setBankRefreshKey] = useState(0);
 
   const [fromDate, toDate] = useMemo(() => [appDaysAgo(BANK_WINDOW_DAYS - 1), appDaysAgo(0)], []);
 
-  const { balanceMinutes, loading: loadingBalance } = useHourBank(profile?.id, bankRefreshKey);
-  const { totalMinutes: overtimeTotal } = usePeriodOvertimeTotal(profile?.id, fromDate, toDate, bankRefreshKey);
-  const { rows: bankRows, loading: loadingBank } = useDetailedDayRows(
+  const { balanceMinutes, loading: loadingBalance, error: balanceError } = useHourBank(
+    profile?.id,
+    bankRefreshKey
+  );
+  const { totalMinutes: overtimeTotal, error: overtimeError } = usePeriodOvertimeTotal(
     profile?.id,
     fromDate,
     toDate,
     bankRefreshKey
   );
+  const { rows: bankRows, loading: loadingBank, error: bankError } = useDetailedDayRows(
+    profile?.id,
+    fromDate,
+    toDate,
+    bankRefreshKey
+  );
+
+  // Falha em qualquer uma das consultas do banco de horas precisa aparecer: um saldo
+  // zerado por erro de rede seria lido como saldo real.
+  const bankLoadError = bankError ?? balanceError ?? overtimeError;
 
   const balance = balanceMinutes ?? 0;
   const balanceColor = balance >= 0 ? colors.success : colors.danger;
@@ -64,8 +78,18 @@ export default function ClockScreen() {
   const reloadTodayPunches = useCallback(async () => {
     if (!profile) return;
     setLoadingLast(true);
+    setLoadError(null);
     try {
       setTodayPunches(await fetchTodayPunches(profile.id));
+    } catch (err) {
+      // Sem saber o que já foi marcado hoje, oferecer o botão é perigoso: era assim que
+      // uma falha de carregamento virava marcação duplicada.
+      setTodayPunches([]);
+      setLoadError(
+        err instanceof Error
+          ? `Não foi possível carregar as marcações de hoje: ${err.message}`
+          : "Não foi possível carregar as marcações de hoje."
+      );
     } finally {
       setLoadingLast(false);
     }
@@ -75,7 +99,8 @@ export default function ClockScreen() {
     reloadTodayPunches();
   }, [reloadTodayPunches]);
 
-  const nextType = nextPunchType(todayPunches);
+  // Enquanto o dia não carregou (ou falhou), não há próxima marcação confiável.
+  const nextType = loadError || loadingLast ? null : nextPunchType(todayPunches);
   const lastPunch = todayPunches.length ? todayPunches[todayPunches.length - 1] : null;
   const pendingToday = todayPunches.filter((p) => p.approval_status === "pending");
 
@@ -120,11 +145,28 @@ export default function ClockScreen() {
         <LiveClock />
 
         <View style={styles.punchButton}>
-          <ClockButton nextType={nextType} onPress={handlePunch} loading={submitting} />
+          <ClockButton
+            nextType={nextType}
+            onPress={handlePunch}
+            loading={submitting}
+            blockedLabel={loadError ? "Indisponível" : loadingLast ? "Carregando…" : undefined}
+          />
         </View>
 
+        {loadError ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorBoxText}>{loadError}</Text>
+            <Text style={styles.errorBoxHint}>
+              O botão fica bloqueado até carregar, para não registrar uma marcação duplicada.
+            </Text>
+            <Button label="Tentar de novo" variant="secondary" onPress={reloadTodayPunches} />
+          </View>
+        ) : null}
+
         <Text style={styles.lastPunch}>
-          {loadingLast
+          {loadError
+            ? "—"
+            : loadingLast
             ? "Carregando última marcação…"
             : lastPunch
             ? `Última marcação hoje: ${PUNCH_LABELS[lastPunch.type as ActivePunchType] ?? lastPunch.type} às ${appTime(
@@ -132,7 +174,7 @@ export default function ClockScreen() {
               )}`
             : "Nenhuma marcação hoje ainda"}
         </Text>
-        {!loadingLast && !nextType ? (
+        {!loadingLast && !loadError && !nextType ? (
           <Text style={styles.dayClosed}>Entrada e saída de hoje já registradas.</Text>
         ) : null}
 
@@ -169,14 +211,18 @@ export default function ClockScreen() {
           <View style={styles.total}>
             <Text style={styles.totalLabel}>Saldo acumulado</Text>
             <Text style={[styles.totalValue, { color: balanceColor }]}>
-              {loadingBalance ? "…" : formatMinutes(balance)}
+              {loadingBalance ? "…" : balanceError ? "—" : formatMinutes(balance)}
             </Text>
           </View>
           <View style={styles.total}>
             <Text style={styles.totalLabel}>Horas extras no período</Text>
-            <Text style={[styles.totalValue, { color: colors.success }]}>{formatMinutes(overtimeTotal)}</Text>
+            <Text style={[styles.totalValue, { color: colors.success }]}>
+              {overtimeTotal === null ? "—" : formatMinutes(overtimeTotal)}
+            </Text>
           </View>
         </View>
+
+        {bankLoadError ? <Text style={styles.errorBoxText}>{bankLoadError}</Text> : null}
 
         {pendingDays > 0 ? (
           <Text style={styles.bankPendingNote}>
@@ -228,4 +274,14 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 44, fontWeight: "700" },
   bankLoading: { fontSize: 18, color: colors.textMuted },
   bankPendingNote: { fontSize: 17, color: colors.warning },
+  errorBox: {
+    gap: 8,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: colors.surfaceAlt,
+  },
+  errorBoxText: { fontSize: 16, color: colors.danger },
+  errorBoxHint: { fontSize: 13, color: colors.textMuted },
 });

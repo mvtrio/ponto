@@ -11,11 +11,17 @@ interface ClockButtonProps {
   nextType: ActivePunchType | null;
   onPress: () => void;
   loading: boolean;
+  /**
+   * Texto do botão desabilitado quando `nextType` é null por motivo que não seja o dia
+   * fechado — carregando ou falha. Sem isso o botão afirmaria "Ponto do dia concluído"
+   * sem saber se é verdade.
+   */
+  blockedLabel?: string;
 }
 
-export function ClockButton({ nextType, onPress, loading }: ClockButtonProps) {
+export function ClockButton({ nextType, onPress, loading, blockedLabel }: ClockButtonProps) {
   if (!nextType) {
-    return <Button label="Ponto do dia concluído" onPress={onPress} loading={false} disabled />;
+    return <Button label={blockedLabel ?? "Ponto do dia concluído"} onPress={onPress} loading={false} disabled />;
   }
   return <Button label={LABELS[nextType]} onPress={onPress} loading={loading} />;
 }

@@ -80,7 +80,9 @@ export default function BankScreen() {
           >
             <View style={styles.overtimeHeadline}>
               <Ionicons name="time-outline" size={20} color={colors.success} />
-              <Text style={styles.overtimeValue}>{formatMinutes(overtimeTotal)}</Text>
+              <Text style={styles.overtimeValue}>
+                {overtimeTotal === null ? "—" : formatMinutes(overtimeTotal)}
+              </Text>
             </View>
             <Text style={styles.overtimeHint}>Horas Extras no Período</Text>
             <MiniBarChart points={overtimePoints} color={colors.success} />
