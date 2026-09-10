@@ -1,7 +1,7 @@
 import { appDate, appTime } from "../../lib/appDate.ts";
 import type { DailySummary, Punch } from "../../types/domain.ts";
 
-export type OverviewStatus = "ok" | "incomplete" | "pending" | "rejected";
+export type OverviewStatus = "ok" | "incomplete" | "pending" | "rejected" | "absent";
 
 export interface OverviewRow {
   key: string;
@@ -34,6 +34,16 @@ export function buildOverviewRows(
     byKey.set(key, entry);
   }
 
+  // O resumo diário também traz faltas — dia útil sem marcação nenhuma. Sem incluí-las
+  // aqui, um dia não batido sumiria do quadro do admin e do relatório, embora esteja
+  // pesando no saldo.
+  for (const summary of summaries) {
+    const key = `${summary.employee_id}|${summary.day}`;
+    if (!byKey.has(key)) {
+      byKey.set(key, { employeeId: summary.employee_id, day: summary.day, punches: [] });
+    }
+  }
+
   const rows: OverviewRow[] = [];
   for (const [key, entry] of byKey) {
     const valid = entry.punches.filter((p) => p.approval_status !== "rejected");
@@ -47,6 +57,8 @@ export function buildOverviewRows(
     // quando não sobrou nenhuma marcação válida — senão o dia ainda conta como incompleto.
     const status: OverviewStatus = hasPending
       ? "pending"
+      : entry.punches.length === 0
+      ? "absent"
       : !clockIn || !clockOut
       ? hasRejected && valid.length === 0
         ? "rejected"

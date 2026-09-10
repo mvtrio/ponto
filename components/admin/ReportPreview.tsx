@@ -17,6 +17,7 @@ const STATUS_META: Record<
   pending: { label: "Aguardando", color: colors.warning, icon: "time" },
   incomplete: { label: "Incompleto", color: colors.warning, icon: "warning" },
   rejected: { label: "Recusada", color: colors.danger, icon: "close-circle" },
+  absent: { label: "Falta", color: colors.danger, icon: "close-circle" },
 };
 
 function formatDay(day: string): string {
@@ -39,6 +40,12 @@ function Totals({ report }: { report: EmployeeReport }) {
         <Text style={styles.totalLabel}>Incompletos</Text>
         <Text style={[styles.totalValue, report.daysIncomplete > 0 && { color: colors.warning }]}>
           {report.daysIncomplete}
+        </Text>
+      </View>
+      <View style={styles.total}>
+        <Text style={styles.totalLabel}>Faltas</Text>
+        <Text style={[styles.totalValue, report.daysAbsent > 0 && { color: colors.danger }]}>
+          {report.daysAbsent}
         </Text>
       </View>
       <View style={styles.total}>

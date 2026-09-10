@@ -10,6 +10,7 @@ const STATUS_LABEL: Record<OverviewStatus, string> = {
   incomplete: "Incompleto",
   pending: "Aguardando",
   rejected: "Recusada",
+  absent: "Falta",
 };
 
 function escapeHtml(value: string): string {
@@ -56,6 +57,7 @@ export function buildReportHtml(
         <tr>
           <td class="name">${escapeHtml(r.employeeName)}</td>
           <td class="num">${r.daysWorked}</td>
+          <td class="num ${r.daysAbsent > 0 ? "neg" : ""}">${r.daysAbsent}</td>
           <td class="num">${r.daysIncomplete}</td>
           <td class="num">${r.daysPending}</td>
           <td class="num pos">${formatMinutes(r.overtimeMinutes)}</td>
@@ -87,6 +89,7 @@ export function buildReportHtml(
           <h2>${escapeHtml(r.employeeName)}</h2>
           <p class="sub">
             ${r.daysWorked} ${r.daysWorked === 1 ? "dia completo" : "dias completos"} ·
+            ${r.daysAbsent} falta(s) ·
             ${r.daysIncomplete} incompleto(s) ·
             ${r.daysPending} aguardando aprovação ·
             saldo do período <strong class="${r.balanceMinutes >= 0 ? "pos" : "neg"}">${signed(
@@ -135,7 +138,7 @@ export function buildReportHtml(
       .pos { color: #0a7c3f; }
       .neg { color: #b3261e; }
       tr.pending td { background: #fff8e1; }
-      tr.rejected td { background: #fdecea; color: #7a1c15; }
+      tr.rejected td, tr.absent td { background: #fdecea; color: #7a1c15; }
       tr.incomplete td { background: #fffbf0; }
       .empty { text-align: center; color: #777; font-style: italic; }
       footer { margin-top: 24px; font-size: 11px; color: #777; border-top: 1px solid #ddd; padding-top: 8px; }
@@ -154,6 +157,7 @@ export function buildReportHtml(
           <tr>
             <th>Funcionário</th>
             <th class="num">Dias completos</th>
+            <th class="num">Faltas</th>
             <th class="num">Incompletos</th>
             <th class="num">Aguardando</th>
             <th class="num">Horas extras</th>
@@ -161,7 +165,7 @@ export function buildReportHtml(
             <th class="num">Saldo</th>
           </tr>
         </thead>
-        <tbody>${resumo || '<tr><td colspan="7" class="empty">Sem marcações no período</td></tr>'}</tbody>
+        <tbody>${resumo || '<tr><td colspan="8" class="empty">Sem marcações no período</td></tr>'}</tbody>
       </table>
     </section>
 

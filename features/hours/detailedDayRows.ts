@@ -5,7 +5,7 @@ import { fetchDailySummaries } from "./hoursService";
 import { addDays, appDate, appTime, appWeekday, startOfAppDay } from "../../lib/appDate";
 import type { Punch } from "../../types/domain";
 
-export type DayStatus = "ok" | "warning" | "folga" | "holiday";
+export type DayStatus = "ok" | "warning" | "folga" | "holiday" | "absent";
 
 export interface DetailedDayRow {
   day: string;
@@ -86,12 +86,14 @@ export async function fetchDetailedDayRows(
       if (!isWorkDay) {
         return { day, label, status: "folga" as const, ...emptyTimes, balanceMinutes: null };
       }
+      // Falta: dia útil sem marcação. O saldo negativo vem do daily_summary, que agora
+      // gera a linha; o dia corrente ainda não conta e por isso pode não ter resumo.
       return {
         day,
         label,
-        status: "warning" as const,
+        status: summary ? ("absent" as const) : ("warning" as const),
         ...emptyTimes,
-        balanceMinutes: -settings.standard_daily_minutes,
+        balanceMinutes: summary?.balance_minutes ?? null,
       };
     }
 

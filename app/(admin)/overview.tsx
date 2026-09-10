@@ -23,6 +23,7 @@ const STATUS_META: Record<
   pending: { label: "Aguardando", color: colors.warning, icon: "time" },
   incomplete: { label: "Incompleto", color: colors.warning, icon: "warning" },
   rejected: { label: "Recusada", color: colors.danger, icon: "close-circle" },
+  absent: { label: "Falta", color: colors.danger, icon: "close-circle" },
 };
 
 const COL = { status: 150, employee: 260, day: 150, time: 120, balance: 130 };

@@ -11,6 +11,7 @@ const STATUS_LABEL: Record<OverviewStatus, string> = {
   incomplete: "Incompleto",
   pending: "Aguardando",
   rejected: "Recusada",
+  absent: "Falta",
 };
 
 function escapeCsvField(value: string | number): string {

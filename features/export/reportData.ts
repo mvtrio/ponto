@@ -7,6 +7,8 @@ export interface EmployeeReport {
   /** Dias com entrada e saída registradas. */
   daysWorked: number;
   daysIncomplete: number;
+  /** Dias úteis sem marcação alguma. */
+  daysAbsent: number;
   daysPending: number;
   /** Soma dos saldos diários já apurados (pendentes não entram). */
   balanceMinutes: number;
@@ -35,6 +37,7 @@ export function buildReportData(rows: OverviewRow[]): EmployeeReport[] {
         days: [],
         daysWorked: 0,
         daysIncomplete: 0,
+        daysAbsent: 0,
         daysPending: 0,
         balanceMinutes: 0,
         overtimeMinutes: 0,
@@ -50,6 +53,7 @@ export function buildReportData(rows: OverviewRow[]): EmployeeReport[] {
       continue;
     }
     if (row.status === "ok") report.daysWorked += 1;
+    else if (row.status === "absent") report.daysAbsent += 1;
     else report.daysIncomplete += 1;
 
     if (row.balanceMinutes !== null) {

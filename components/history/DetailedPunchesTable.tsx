@@ -10,6 +10,7 @@ const STATUS_ICON: Record<DetailedDayRow["status"], { name: keyof typeof Ionicon
   warning: { name: "warning", color: colors.warning },
   folga: { name: "checkmark-circle", color: colors.success },
   holiday: { name: "flag", color: colors.accent },
+  absent: { name: "close-circle", color: colors.danger },
 };
 
 // Dimensões generosas: a tabela é lida no dia a dia por quem enxerga mal, então
@@ -63,9 +64,16 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
         {rows.map((row) => {
           const icon = STATUS_ICON[row.status];
           const isFolga = row.status === "folga";
+          const isAbsent = row.status === "absent";
           const isHoliday = row.status === "holiday";
           const timeColor =
-            isFolga || isHoliday ? colors.textFaint : row.status === "warning" ? colors.warning : colors.text;
+            isFolga || isHoliday
+              ? colors.textFaint
+              : isAbsent
+              ? colors.danger
+              : row.status === "warning"
+              ? colors.warning
+              : colors.text;
           const balanceColor = (row.balanceMinutes ?? 0) >= 0 ? colors.success : colors.warning;
 
           return (
@@ -79,7 +87,7 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
               </Cell>
               {TIME_COLUMNS.map(({ key }) => (
                 <Cell key={key} width={COLUMN_WIDTH} color={timeColor}>
-                  {isFolga ? "FOLGA" : isHoliday ? "FERIADO" : row[key] ?? "—"}
+                  {isFolga ? "FOLGA" : isHoliday ? "FERIADO" : isAbsent ? "FALTA" : row[key] ?? "—"}
                 </Cell>
               ))}
               {row.hasPending ? (
