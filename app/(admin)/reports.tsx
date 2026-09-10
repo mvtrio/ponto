@@ -1,47 +1,62 @@
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { fetchEmployees } from "../../features/admin/adminService";
+import { fetchPunchOverview } from "../../features/admin/punchOverviewService";
+import { isValidDate } from "../../features/corrections/datetime";
 import { exportCsv } from "../../features/export/csvExport";
 import { exportPdf } from "../../features/export/pdfExport";
-import { fetchDailySummaries } from "../../features/hours/hoursService";
-import { colors } from "../../lib/theme";
-import type { Profile } from "../../types/domain";
+import { buildReportData, type EmployeeReport } from "../../features/export/reportData";
 import { appDaysAgo } from "../../lib/appDate";
+import { colors } from "../../lib/theme";
+import { formatMinutes } from "../../types/domain";
+
+const ALL = "__todos__";
 
 export default function ReportsScreen() {
-  const [employees, setEmployees] = useState<Profile[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState(appDaysAgo(30));
   const [toDate, setToDate] = useState(appDaysAgo(0));
+  const [selectedId, setSelectedId] = useState<string>(ALL);
+  const [reports, setReports] = useState<EmployeeReport[]>([]);
+  const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchEmployees()
-      .then((data) => {
-        setEmployees(data);
-        if (data.length) setSelectedId(data[0].id);
+    let cancelled = false;
+    if (!isValidDate(fromDate) || !isValidDate(toDate)) {
+      setError("Informe datas válidas no formato AAAA-MM-DD.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    fetchPunchOverview(fromDate, toDate)
+      .then((overview) => {
+        if (!cancelled) setReports(buildReportData(overview.rows));
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Erro ao carregar funcionários"));
-  }, []);
+      .catch((err) => {
+        if (!cancelled) {
+          setReports([]);
+          setError(err instanceof Error ? err.message : "Erro ao carregar o relatório");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fromDate, toDate]);
+
+  const selected = selectedId === ALL ? reports : reports.filter((r) => r.employeeId === selectedId);
 
   async function handleExport(format: "csv" | "pdf") {
-    if (!selectedId) return;
-    const employee = employees.find((e) => e.id === selectedId);
-    if (!employee) return;
-
     setError(null);
     setExporting(true);
     try {
-      const rows = await fetchDailySummaries(selectedId, fromDate, toDate);
-      if (format === "csv") {
-        await exportCsv(rows, employee.full_name);
-      } else {
-        await exportPdf(rows, employee.full_name, fromDate, toDate);
-      }
+      if (format === "csv") await exportCsv(selected);
+      else await exportPdf(selected, fromDate, toDate);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao exportar relatório");
     } finally {
@@ -52,46 +67,102 @@ export default function ReportsScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Card style={styles.card}>
-        <Text style={styles.label}>Funcionário</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.employeeList}>
-          {employees.map((e) => (
-            <Text
-              key={e.id}
-              onPress={() => setSelectedId(e.id)}
-              style={[styles.employeeChip, selectedId === e.id && styles.employeeChipSelected]}
-            >
-              {e.full_name}
-            </Text>
-          ))}
-        </ScrollView>
+        <Text style={styles.title}>Relatórios</Text>
 
-        <Text style={styles.label}>De</Text>
-        <TextInput
-          style={styles.input}
-          value={fromDate}
-          onChangeText={setFromDate}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
-        />
-        <Text style={styles.label}>Até</Text>
-        <TextInput
-          style={styles.input}
-          value={toDate}
-          onChangeText={setToDate}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
-        />
+        <View style={styles.filters}>
+          <View style={styles.dateField}>
+            <Text style={styles.label}>De</Text>
+            <TextInput
+              style={styles.input}
+              value={fromDate}
+              onChangeText={setFromDate}
+              placeholder="AAAA-MM-DD"
+              placeholderTextColor={colors.textFaint}
+            />
+          </View>
+          <View style={styles.dateField}>
+            <Text style={styles.label}>Até</Text>
+            <TextInput
+              style={styles.input}
+              value={toDate}
+              onChangeText={setToDate}
+              placeholder="AAAA-MM-DD"
+              placeholderTextColor={colors.textFaint}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.label}>Funcionário</Text>
+        <View style={styles.chipRow}>
+          <Pressable onPress={() => setSelectedId(ALL)} style={[styles.chip, selectedId === ALL && styles.chipOn]}>
+            <Text style={[styles.chipText, selectedId === ALL && styles.chipTextOn]}>Todos</Text>
+          </Pressable>
+          {reports.map((r) => (
+            <Pressable
+              key={r.employeeId}
+              onPress={() => setSelectedId(r.employeeId)}
+              style={[styles.chip, selectedId === r.employeeId && styles.chipOn]}
+            >
+              <Text style={[styles.chipText, selectedId === r.employeeId && styles.chipTextOn]}>
+                {r.employeeName}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <View style={styles.actions}>
           <View style={styles.actionButton}>
-            <Button label="Exportar CSV" variant="secondary" onPress={() => handleExport("csv")} loading={exporting} />
+            <Button
+              label="Exportar CSV"
+              variant="secondary"
+              onPress={() => handleExport("csv")}
+              loading={exporting}
+              disabled={loading || selected.length === 0}
+            />
           </View>
           <View style={styles.actionButton}>
-            <Button label="Exportar PDF" onPress={() => handleExport("pdf")} loading={exporting} />
+            <Button
+              label="Exportar PDF"
+              onPress={() => handleExport("pdf")}
+              loading={exporting}
+              disabled={loading || selected.length === 0}
+            />
           </View>
         </View>
+      </Card>
+
+      {/* Prévia do que será exportado — antes não havia como saber o que sairia no arquivo. */}
+      <Card style={styles.card}>
+        <Text style={styles.sectionTitle}>Prévia</Text>
+        {loading ? <Text style={styles.muted}>Carregando…</Text> : null}
+        {!loading && selected.length === 0 ? (
+          <Text style={styles.muted}>Sem marcações no período</Text>
+        ) : null}
+
+        {selected.map((r) => (
+          <View key={r.employeeId} style={styles.employeeBlock}>
+            <Text style={styles.employeeName}>{r.employeeName}</Text>
+            <Text style={styles.muted}>
+              {r.daysWorked} dia(s) completo(s) · {r.daysIncomplete} incompleto(s) · {r.daysPending} aguardando
+            </Text>
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalItem}>
+                Extras <Text style={styles.pos}>{formatMinutes(r.overtimeMinutes)}</Text>
+              </Text>
+              <Text style={styles.totalItem}>
+                Débito <Text style={styles.neg}>{formatMinutes(r.deficitMinutes)}</Text>
+              </Text>
+              <Text style={styles.totalItem}>
+                Saldo{" "}
+                <Text style={r.balanceMinutes >= 0 ? styles.pos : styles.neg}>
+                  {formatMinutes(r.balanceMinutes)}
+                </Text>
+              </Text>
+            </View>
+          </View>
+        ))}
       </Card>
     </ScrollView>
   );
@@ -99,32 +170,48 @@ export default function ReportsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16 },
-  card: { gap: 8 },
-  label: { fontSize: 13, color: colors.textMuted, marginTop: 8 },
-  employeeList: { flexDirection: "row" },
-  employeeChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceAlt,
-    marginRight: 8,
-    color: colors.text,
-    fontSize: 13,
-    overflow: "hidden",
-  },
-  employeeChipSelected: { backgroundColor: colors.chipSelected, color: colors.chipSelectedText },
+  content: { padding: 16, gap: 16 },
+  card: { gap: 12 },
+  title: { fontSize: 24, fontWeight: "700", color: colors.text },
+  sectionTitle: { fontSize: 20, fontWeight: "700", color: colors.text },
+  filters: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  dateField: { gap: 4, minWidth: 180 },
+  label: { fontSize: 14, color: colors.textMuted },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
+    paddingVertical: 12,
+    fontSize: 16,
     color: colors.text,
   },
-  error: { color: colors.danger },
-  actions: { flexDirection: "row", gap: 8, marginTop: 12 },
-  actionButton: { flex: 1 },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chipOn: { backgroundColor: colors.chipSelected, borderColor: colors.chipSelected },
+  chipText: { fontSize: 15, color: colors.textMuted },
+  chipTextOn: { color: colors.chipSelectedText, fontWeight: "600" },
+  actions: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
+  actionButton: { flex: 1, minWidth: 180 },
+  error: { fontSize: 16, color: colors.danger },
+  muted: { fontSize: 16, color: colors.textMuted },
+  employeeBlock: {
+    gap: 4,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  employeeName: { fontSize: 18, fontWeight: "700", color: colors.text },
+  totalsRow: { flexDirection: "row", flexWrap: "wrap", gap: 20, marginTop: 4 },
+  totalItem: { fontSize: 16, color: colors.textMuted },
+  pos: { color: colors.success, fontWeight: "700" },
+  neg: { color: colors.danger, fontWeight: "700" },
 });
