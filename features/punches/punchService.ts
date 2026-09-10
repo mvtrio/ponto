@@ -9,6 +9,11 @@ const ACTIVE_TYPES: ActivePunchType[] = ["clock_in", "clock_out"];
 export interface CreatePunchInput {
   employeeId: string;
   type: ActivePunchType;
+  /**
+   * Momento da marcação. O funcionário escolhe — inclusive um dia passado, para quando
+   * esqueceu de bater. Continua passando pela aprovação do admin, que é o controle.
+   */
+  occurredAt: Date;
   latitude: number | null;
   longitude: number | null;
   locationAccuracyM: number | null;
@@ -36,7 +41,7 @@ async function uploadPhoto(employeeId: string, type: PunchType, occurredAt: Date
 }
 
 export async function createPunch(input: CreatePunchInput): Promise<Punch> {
-  const occurredAt = new Date();
+  const occurredAt = input.occurredAt;
   let photoPath: string | null = null;
 
   if (input.photoUri) {
@@ -139,9 +144,13 @@ export async function reviewPunch(punchId: string, approve: boolean): Promise<Pu
   return data as unknown as Punch;
 }
 
-/** Marcações de entrada/saída de hoje, em ordem cronológica (dia no fuso do sistema). */
-export async function fetchTodayPunches(employeeId: string): Promise<Punch[]> {
-  const { fromIso, toIso } = appDayRange(appToday());
+/** Marcações de entrada/saída de um dia (AAAA-MM-DD no fuso do sistema). */
+export async function fetchPunchesForDay(employeeId: string, day: string): Promise<Punch[]> {
+  const { fromIso, toIso } = appDayRange(day);
   return fetchPunchesForRange(employeeId, fromIso, toIso);
+}
+
+export async function fetchTodayPunches(employeeId: string): Promise<Punch[]> {
+  return fetchPunchesForDay(employeeId, appToday());
 }
 
