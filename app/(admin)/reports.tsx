@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { ReportPreview } from "../../components/admin/ReportPreview";
 import { fetchPunchOverview } from "../../features/admin/punchOverviewService";
 import { isValidDate } from "../../features/corrections/datetime";
 import { exportCsv } from "../../features/export/csvExport";
@@ -10,7 +11,6 @@ import { exportPdf } from "../../features/export/pdfExport";
 import { buildReportData, type EmployeeReport } from "../../features/export/reportData";
 import { appDaysAgo } from "../../lib/appDate";
 import { colors } from "../../lib/theme";
-import { formatMinutes } from "../../types/domain";
 
 const ALL = "__todos__";
 
@@ -133,36 +133,20 @@ export default function ReportsScreen() {
         </View>
       </Card>
 
-      {/* Prévia do que será exportado — antes não havia como saber o que sairia no arquivo. */}
       <Card style={styles.card}>
-        <Text style={styles.sectionTitle}>Prévia</Text>
+        <Text style={styles.sectionTitle}>
+          {selectedId === ALL ? "Relatório de todos os funcionários" : "Relatório"}
+        </Text>
+        <Text style={styles.muted}>
+          É exatamente o conteúdo que sai no PDF e no CSV — a exportação não traz nada a mais.
+        </Text>
+
         {loading ? <Text style={styles.muted}>Carregando…</Text> : null}
         {!loading && selected.length === 0 ? (
           <Text style={styles.muted}>Sem marcações no período</Text>
         ) : null}
 
-        {selected.map((r) => (
-          <View key={r.employeeId} style={styles.employeeBlock}>
-            <Text style={styles.employeeName}>{r.employeeName}</Text>
-            <Text style={styles.muted}>
-              {r.daysWorked} dia(s) completo(s) · {r.daysIncomplete} incompleto(s) · {r.daysPending} aguardando
-            </Text>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalItem}>
-                Extras <Text style={styles.pos}>{formatMinutes(r.overtimeMinutes)}</Text>
-              </Text>
-              <Text style={styles.totalItem}>
-                Débito <Text style={styles.neg}>{formatMinutes(r.deficitMinutes)}</Text>
-              </Text>
-              <Text style={styles.totalItem}>
-                Saldo{" "}
-                <Text style={r.balanceMinutes >= 0 ? styles.pos : styles.neg}>
-                  {formatMinutes(r.balanceMinutes)}
-                </Text>
-              </Text>
-            </View>
-          </View>
-        ))}
+        {!loading && selected.length > 0 ? <ReportPreview reports={selected} /> : null}
       </Card>
     </ScrollView>
   );
@@ -203,15 +187,4 @@ const styles = StyleSheet.create({
   actionButton: { flex: 1, minWidth: 180 },
   error: { fontSize: 16, color: colors.danger },
   muted: { fontSize: 16, color: colors.textMuted },
-  employeeBlock: {
-    gap: 4,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  employeeName: { fontSize: 18, fontWeight: "700", color: colors.text },
-  totalsRow: { flexDirection: "row", flexWrap: "wrap", gap: 20, marginTop: 4 },
-  totalItem: { fontSize: 16, color: colors.textMuted },
-  pos: { color: colors.success, fontWeight: "700" },
-  neg: { color: colors.danger, fontWeight: "700" },
 });
