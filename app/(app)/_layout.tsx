@@ -37,12 +37,21 @@ export default function AppLayout() {
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
         tabBarPosition: "top",
-        tabBarStyle: { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        // Altura explícita: com a barra no topo, o padrão não reserva espaço para ícone
+        // + rótulo e o texto saía cortado pela metade.
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+          height: 76,
+          paddingTop: 8,
+          paddingBottom: 10,
+        },
+        tabBarItemStyle: { paddingVertical: 0 },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarIconStyle: { marginBottom: 2 },
+        tabBarIconStyle: { marginBottom: 0 },
         // Rótulo maior que o padrão e sem corte: o sistema é usado por quem enxerga mal.
-        tabBarLabelStyle: { fontSize: 13, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 13, fontWeight: "600", marginTop: 2, paddingBottom: 2 },
         tabBarAllowFontScaling: false,
       }}
     >
