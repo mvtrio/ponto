@@ -1,5 +1,15 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Image, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -43,6 +53,7 @@ export default function ClockScreen() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -124,6 +135,20 @@ export default function ClockScreen() {
     }
   }
 
+  /** Recarrega tudo que a tela mostra: marcações do dia, saldo, extras e histórico. */
+  async function handleRefresh() {
+    setRefreshing(true);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      await reloadDay();
+      // Os hooks do banco de horas e do histórico observam refreshKey.
+      setRefreshKey((key) => key + 1);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   const balance = balanceMinutes ?? 0;
   const balanceColor = balance >= 0 ? colors.success : colors.danger;
   const bankError = balanceError ?? overtimeError ?? history.error;
@@ -131,7 +156,23 @@ export default function ClockScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Card style={styles.card}>
-        <Text style={styles.greeting}>Olá, {profile?.full_name || "funcionário"}</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.greeting}>Olá, {profile?.full_name || "funcionário"}</Text>
+          <Pressable
+            onPress={handleRefresh}
+            disabled={refreshing}
+            style={({ pressed }) => [styles.refreshButton, (pressed || refreshing) && styles.refreshButtonActive]}
+            accessibilityRole="button"
+            accessibilityLabel="Atualizar informações da tela"
+          >
+            {refreshing ? (
+              <ActivityIndicator color={colors.accent} />
+            ) : (
+              <Ionicons name="refresh" size={26} color={colors.accent} />
+            )}
+            <Text style={styles.refreshText}>{refreshing ? "Atualizando…" : "Atualizar"}</Text>
+          </Pressable>
+        </View>
 
         <PunchDateTimeSelector
           value={punchAt}
@@ -213,7 +254,20 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, gap: 16 },
   card: { gap: 14 },
-  greeting: { fontSize: 20, fontWeight: "700", color: colors.text },
+  greeting: { fontSize: 20, fontWeight: "700", color: colors.text, flexShrink: 1 },
+  headerRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  refreshButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  refreshButtonActive: { opacity: 0.6 },
+  refreshText: { fontSize: 17, fontWeight: "600", color: colors.accent },
   sectionTitle: { fontSize: 26, fontWeight: "700", color: colors.text },
   // Botão centralizado e estreito: não precisa ocupar a largura toda da tela.
   punchButton: { alignSelf: "center", width: "100%", maxWidth: 320 },
