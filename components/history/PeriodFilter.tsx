@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Card } from "../ui/Card";
+import { WeekdayLabel } from "../ui/WeekdayLabel";
 import { colors } from "../../lib/theme";
 
 interface PeriodFilterProps {
@@ -20,21 +21,27 @@ export function PeriodFilter({ fromDate, toDate, onChangeFromDate, onChangeToDat
         <Ionicons name="calendar-outline" size={18} color={colors.textMuted} />
       </View>
       <View style={styles.dateRow}>
-        <TextInput
-          style={styles.dateInput}
-          value={fromDate}
-          onChangeText={onChangeFromDate}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
-        />
+        <View style={styles.dateField}>
+          <TextInput
+            style={styles.dateInput}
+            value={fromDate}
+            onChangeText={onChangeFromDate}
+            placeholder="AAAA-MM-DD"
+            placeholderTextColor={colors.textFaint}
+          />
+          <WeekdayLabel day={fromDate} style={styles.weekday} />
+        </View>
         <Text style={styles.dash}>—</Text>
-        <TextInput
-          style={styles.dateInput}
-          value={toDate}
-          onChangeText={onChangeToDate}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
-        />
+        <View style={styles.dateField}>
+          <TextInput
+            style={styles.dateInput}
+            value={toDate}
+            onChangeText={onChangeToDate}
+            placeholder="AAAA-MM-DD"
+            placeholderTextColor={colors.textFaint}
+          />
+          <WeekdayLabel day={toDate} style={styles.weekday} />
+        </View>
       </View>
     </Card>
   );
@@ -46,8 +53,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   hint: { fontSize: 12, color: colors.textFaint },
   dateRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  dateField: { flex: 1, gap: 4 },
+  weekday: { fontSize: 17 },
   dateInput: {
-    flex: 1,
     backgroundColor: colors.surfaceAlt,
     borderRadius: 8,
     borderWidth: 1,

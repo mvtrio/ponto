@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { WeekdayLabel } from "../../components/ui/WeekdayLabel";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { proposeCorrection } from "../../features/corrections/correctionService";
 import {
@@ -138,6 +139,7 @@ export default function EmployeeCorrectionsScreen() {
           placeholder="AAAA-MM-DD"
           placeholderTextColor={colors.textFaint}
         />
+        <WeekdayLabel day={date} />
 
         <Text style={styles.label}>O que corrigir</Text>
         <View style={styles.chipRow}>

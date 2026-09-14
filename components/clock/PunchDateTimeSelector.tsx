@@ -3,8 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors } from "../../lib/theme";
 import { appDate, appTime } from "../../lib/appDate";
-
-const WEEKDAYS = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+import { weekdayName } from "../ui/WeekdayLabel";
 
 interface Props {
   /** Momento escolhido para a marcação. */
@@ -54,7 +53,8 @@ function Stepper({
 export function PunchDateTimeSelector({ value, onChange, isNow, onResetToNow }: Props) {
   const day = appDate(value);
   const [y, m, d] = day.split("-");
-  const weekday = WEEKDAYS[new Date(Date.UTC(Number(y), Number(m) - 1, Number(d))).getUTCDay()];
+  // Mesma fonte usada nos campos de data das outras telas, para os nomes não divergirem.
+  const weekday = weekdayName(day);
 
   function shift(minutes: number) {
     const next = new Date(value.getTime() + minutes * 60_000);
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   container: { alignItems: "center", gap: 4, paddingVertical: 8 },
   dateText: { fontSize: 22, fontWeight: "600", color: colors.textMuted },
   time: { fontSize: 56, fontWeight: "700", color: colors.text, fontVariant: ["tabular-nums"] },
-  weekday: { fontSize: 16, color: colors.textMuted },
+  weekday: { fontSize: 22, fontWeight: "600", color: colors.accent, textTransform: "capitalize" },
   steppers: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 12, marginTop: 12 },
   stepper: {
     flexDirection: "row",

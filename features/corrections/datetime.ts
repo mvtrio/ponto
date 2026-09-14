@@ -3,7 +3,7 @@
  * ISO gravado em `punches.occurred_at`. Tudo no fuso do sistema — ver lib/appDate.
  */
 
-import { appDate, appTime, appToday, startOfAppDay } from "../../lib/appDate";
+import { appDate, appTime, appToday, startOfAppDay } from "../../lib/appDate.ts";
 
 export const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
