@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import type { ColorValue } from "react-native";
 
+import { HeaderUserBar } from "../../components/ui/HeaderUserBar";
 import { LoadingScreen } from "../../components/ui/LoadingScreen";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
@@ -36,6 +37,8 @@ export default function AppLayout() {
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
+        // Nome de quem está conectado e o botão de sair acompanham todas as telas.
+        headerRight: () => <HeaderUserBar />,
         tabBarPosition: "top",
         // Altura explícita: com a barra no topo, o padrão não reserva espaço para ícone
         // + rótulo e o texto saía cortado pela metade.

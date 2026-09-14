@@ -164,8 +164,8 @@ export default function ClockScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Card style={styles.card}>
+        {/* O nome de quem está conectado agora fica no cabeçalho, em HeaderUserBar. */}
         <View style={styles.headerRow}>
-          <Text style={styles.greeting}>Olá, {profile?.full_name || "funcionário"}</Text>
           <Pressable
             onPress={handleRefresh}
             disabled={refreshing}
@@ -272,8 +272,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, gap: 16 },
   card: { gap: 14 },
-  greeting: { fontSize: 20, fontWeight: "700", color: colors.text, flexShrink: 1 },
-  headerRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
   refreshButton: {
     flexDirection: "row",
     alignItems: "center",
