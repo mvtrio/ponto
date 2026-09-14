@@ -20,6 +20,8 @@ import { PunchHistoryList } from "../../components/history/PunchHistoryList";
 import { captureLocation } from "../../features/capture/useLocation";
 import { capturePhoto } from "../../features/capture/useCameraCapture";
 import { createPunch, fetchPunchesForDay, nextPunchType } from "../../features/punches/punchService";
+import { canPunchOnDay } from "../../features/punches/punchRules";
+import { useCompanySettings } from "../../features/company/useCompanySettings";
 import { usePunchHistory } from "../../features/punches/usePunchHistory";
 import { useHourBank } from "../../features/hours/useHourBank";
 import { usePeriodOvertimeTotal } from "../../features/hours/useIndicators";
@@ -73,6 +75,11 @@ export default function ClockScreen() {
     refreshKey
   );
   const history = usePunchHistory(profile?.id, WINDOW_DAYS, refreshKey);
+  const { settings, loading: loadingSettings, error: settingsError } = useCompanySettings();
+
+  // Sem a escala carregada não dá para afirmar que o dia permite marcação, e supor que
+  // permite deixaria passar justamente o ponto de fim de semana que a regra proíbe.
+  const isWorkDay = settings ? canPunchOnDay(selectedDay, settings.work_week_days) : false;
 
   // As marcações do DIA SELECIONADO decidem a próxima: se o funcionário voltar para um
   // dia em que já bateu a entrada, o botão precisa oferecer a saída daquele dia.
@@ -98,7 +105,8 @@ export default function ClockScreen() {
     reloadDay();
   }, [reloadDay]);
 
-  const nextType = loadError || loadingDay ? null : nextPunchType(dayPunches);
+  const nextType =
+    loadError || loadingDay || loadingSettings || !isWorkDay ? null : nextPunchType(dayPunches);
 
   async function handlePunch() {
     if (!profile || !nextType) return;
@@ -187,10 +195,12 @@ export default function ClockScreen() {
             onPress={handlePunch}
             loading={submitting}
             blockedLabel={
-              loadError
+              loadError || settingsError
                 ? "Indisponível"
-                : loadingDay
+                : loadingDay || loadingSettings
                 ? "Carregando…"
+                : !isWorkDay
+                ? "Não é dia de trabalho"
                 : isToday
                 ? "Ponto do dia concluído"
                 : "Dia já tem entrada e saída"
@@ -208,7 +218,15 @@ export default function ClockScreen() {
           </View>
         ) : null}
 
-        {!isToday && !loadError ? (
+        {!isWorkDay && !loadingSettings && !settingsError ? (
+          <Text style={styles.weekendNotice}>
+            Fim de semana não tem expediente — a marcação de ponto fica disponível de segunda a sexta.
+          </Text>
+        ) : null}
+
+        {settingsError ? <Text style={styles.error}>{settingsError}</Text> : null}
+
+        {isWorkDay && !isToday && !loadError ? (
           <Text style={styles.pastNotice}>
             Registrando em um dia anterior. O administrador vê a data escolhida ao aprovar.
           </Text>
@@ -272,6 +290,7 @@ const styles = StyleSheet.create({
   // Botão centralizado e estreito: não precisa ocupar a largura toda da tela.
   punchButton: { alignSelf: "center", width: "100%", maxWidth: 320 },
   pastNotice: { fontSize: 16, color: colors.warning, textAlign: "center" },
+  weekendNotice: { fontSize: 16, color: colors.textMuted, textAlign: "center" },
   photoPreview: { width: 96, height: 96, borderRadius: 8, alignSelf: "center" },
   error: { fontSize: 16, color: colors.danger },
   success: { fontSize: 17, color: colors.success, fontWeight: "600" },

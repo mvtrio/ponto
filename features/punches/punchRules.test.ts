@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { nextPunchType } from "./punchRules.ts";
+import { canPunchOnDay, nextPunchType } from "./punchRules.ts";
 import type { Punch, PunchApprovalStatus, PunchType } from "../../types/domain.ts";
 
 function punch(type: PunchType, approval_status: PunchApprovalStatus = "pending"): Punch {
@@ -50,4 +50,17 @@ test("marcação rejeitada libera a vaga de novo", () => {
 test("intervalos legados não interferem na decisão", () => {
   const rows = [punch("break_start", "approved"), punch("break_end", "approved")];
   assert.equal(nextPunchType(rows), "clock_in");
+});
+
+test("fim de semana não permite marcação", () => {
+  const seg_a_sex = [1, 2, 3, 4, 5];
+  assert.equal(canPunchOnDay("2026-09-11", seg_a_sex), true, "sexta-feira");
+  assert.equal(canPunchOnDay("2026-09-12", seg_a_sex), false, "sábado");
+  assert.equal(canPunchOnDay("2026-09-13", seg_a_sex), false, "domingo");
+  assert.equal(canPunchOnDay("2026-09-14", seg_a_sex), true, "segunda-feira");
+});
+
+test("escala diferente muda o que é dia de trabalho", () => {
+  // Escala que inclui sábado: a regra vem de company_settings, não do código.
+  assert.equal(canPunchOnDay("2026-09-12", [1, 2, 3, 4, 5, 6]), true);
 });
