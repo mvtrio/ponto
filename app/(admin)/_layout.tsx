@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
-import type { ColorValue } from "react-native";
+import { View, type ColorValue } from "react-native";
 
+import { PendingApprovalsBell } from "../../components/admin/PendingApprovalsBell";
 import { HeaderUserBar } from "../../components/ui/HeaderUserBar";
 import { LoadingScreen } from "../../components/ui/LoadingScreen";
 import { useSession } from "../../features/auth/useSession";
@@ -31,8 +32,14 @@ export default function AdminLayout() {
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
-        // Nome de quem está conectado e o botão de sair acompanham todas as telas.
-        headerRight: () => <HeaderUserBar />,
+        // Sino de pendências, nome de quem está conectado e o botão de sair acompanham
+        // todas as telas do admin.
+        headerRight: () => (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <PendingApprovalsBell />
+            <HeaderUserBar />
+          </View>
+        ),
         tabBarPosition: "top",
         // Altura explícita: com a barra no topo, o padrão não reserva espaço para ícone
         // + rótulo e o texto saía cortado pela metade.

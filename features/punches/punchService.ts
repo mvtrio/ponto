@@ -135,6 +135,21 @@ export async function fetchPendingPunches(limit = 100): Promise<Punch[]> {
   return (data ?? []) as unknown as Punch[];
 }
 
+/**
+ * Quantas marcações aguardam aprovação. `head: true` traz só a contagem, sem as linhas —
+ * o sino consulta isso de tempos em tempos e não precisa dos dados.
+ */
+export async function countPendingPunches(): Promise<number> {
+  const { count, error } = await supabase
+    .from("punches")
+    .select("id", { count: "exact", head: true })
+    .eq("approval_status", "pending")
+    .is("superseded_by", null);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function reviewPunch(punchId: string, approve: boolean): Promise<Punch> {
   const { data, error } = await supabase.rpc("review_punch", {
     p_punch_id: punchId,
