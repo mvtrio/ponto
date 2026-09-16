@@ -72,11 +72,12 @@ export default function DashboardScreen() {
               </Text>
             </Card>
             <Card style={styles.statCard}>
-              <Text style={styles.statLabel}>Em dia</Text>
+              <Text style={styles.statLabel}>Funcionários em dia</Text>
               <Text style={[styles.statValue, { color: colors.success }]}>{positiveCount}</Text>
             </Card>
             <Card style={styles.statCard}>
-              <Text style={styles.statLabel}>Devendo horas</Text>
+              {/* "Devendo horas: 1" se lia como uma hora devida; o número é de pessoas. */}
+              <Text style={styles.statLabel}>Funcionários devendo</Text>
               <Text style={[styles.statValue, { color: colors.danger }]}>{negativeCount}</Text>
             </Card>
           </View>
