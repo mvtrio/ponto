@@ -1,4 +1,4 @@
-import { appWeekday } from "../../lib/appDate.ts";
+import { appDate, appWeekday } from "../../lib/appDate.ts";
 import type { ActivePunchType, Punch } from "../../types/domain.ts";
 
 /**
@@ -32,4 +32,34 @@ export function nextPunchType(todayPunches: Punch[]): ActivePunchType | null {
  */
 export function canPunchOnDay(day: string, workWeekDays: number[]): boolean {
   return workWeekDays.includes(appWeekday(day));
+}
+
+/**
+ * Dias passados em que a entrada foi registrada e a saída não.
+ *
+ * Conta como registrada a saída que ainda aguarda aprovação: a funcionária já fez a
+ * parte dela, e avisar "você não registrou" nesse caso seria falso — o que falta é a
+ * revisão do admin. Só a marcação recusada volta a contar como ausente, porque aí
+ * realmente não há registro válido.
+ *
+ * O dia corrente fica de fora: a saída ainda vai acontecer.
+ */
+export function daysMissingClockOut(punches: Punch[], today: string): string[] {
+  const byDay = new Map<string, { entrada: boolean; saida: boolean }>();
+
+  for (const punch of punches) {
+    if (punch.approval_status === "rejected") continue;
+    const day = appDate(punch.occurred_at);
+    if (day >= today) continue;
+
+    const entry = byDay.get(day) ?? { entrada: false, saida: false };
+    if (punch.type === "clock_in") entry.entrada = true;
+    if (punch.type === "clock_out") entry.saida = true;
+    byDay.set(day, entry);
+  }
+
+  return Array.from(byDay.entries())
+    .filter(([, v]) => v.entrada && !v.saida)
+    .map(([day]) => day)
+    .sort((a, b) => b.localeCompare(a));
 }

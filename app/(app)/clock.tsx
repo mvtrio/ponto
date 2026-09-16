@@ -20,14 +20,15 @@ import { PunchHistoryList } from "../../components/history/PunchHistoryList";
 import { captureLocation } from "../../features/capture/useLocation";
 import { capturePhoto } from "../../features/capture/useCameraCapture";
 import { createPunch, fetchPunchesForDay, nextPunchType } from "../../features/punches/punchService";
-import { canPunchOnDay } from "../../features/punches/punchRules";
+import { canPunchOnDay, daysMissingClockOut } from "../../features/punches/punchRules";
 import { useCompanySettings } from "../../features/company/useCompanySettings";
 import { usePunchHistory } from "../../features/punches/usePunchHistory";
 import { useHourBank } from "../../features/hours/useHourBank";
 import { usePeriodOvertimeTotal } from "../../features/hours/useIndicators";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
-import { appDate, appDaysAgo, appToday } from "../../lib/appDate";
+import { appDate, appDaysAgo, appToday, startOfAppDay } from "../../lib/appDate";
+import { weekdayName } from "../../components/ui/weekdayNames";
 import { formatMinutes, type ActivePunchType, type Punch } from "../../types/domain";
 
 const CONFIRM_LABELS: Record<ActivePunchType, string> = {
@@ -161,6 +162,17 @@ export default function ClockScreen() {
   const balanceColor = balance >= 0 ? colors.success : colors.danger;
   const bankError = balanceError ?? overtimeError ?? history.error;
 
+  // Dias passados com entrada e sem saída. Saída pendente de aprovação já conta como
+  // registrada — quem precisa agir nesse caso é o admin, não ela.
+  const missingClockOut = daysMissingClockOut(history.punches, appToday());
+
+  /** Leva o seletor para o dia pendente, às 18:00, para ela só ajustar e confirmar. */
+  function goToMissingDay(day: string) {
+    setSelectedAt(new Date(Date.parse(startOfAppDay(day)) + 18 * 60 * 60_000));
+    setSuccessMessage(null);
+    setError(null);
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Card style={styles.card}>
@@ -215,6 +227,27 @@ export default function ClockScreen() {
               O botão fica bloqueado até carregar, para não registrar uma marcação duplicada.
             </Text>
             <Button label="Tentar de novo" variant="secondary" onPress={reloadDay} />
+          </View>
+        ) : null}
+
+        {missingClockOut.length > 0 ? (
+          <View style={styles.missingBox}>
+            <Text style={styles.missingTitle}>Saída não registrada</Text>
+            {missingClockOut.map((day) => {
+              const [, mm, dd] = day.split("-");
+              return (
+                <View key={day} style={styles.missingRow}>
+                  <Text style={styles.missingItem}>
+                    Você não registrou a saída de {weekdayName(day)}, {dd}/{mm}. Realize o registro.
+                  </Text>
+                  <Button
+                    label={`Registrar saída de ${dd}/${mm}`}
+                    variant="secondary"
+                    onPress={() => goToMissingDay(day)}
+                  />
+                </View>
+              );
+            })}
           </View>
         ) : null}
 
@@ -290,6 +323,17 @@ const styles = StyleSheet.create({
   punchButton: { alignSelf: "center", width: "100%", maxWidth: 320 },
   pastNotice: { fontSize: 16, color: colors.warning, textAlign: "center" },
   weekendNotice: { fontSize: 16, color: colors.textMuted, textAlign: "center" },
+  missingBox: {
+    gap: 10,
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    backgroundColor: colors.surfaceAlt,
+  },
+  missingTitle: { fontSize: 18, fontWeight: "700", color: colors.warning },
+  missingRow: { gap: 8 },
+  missingItem: { fontSize: 17, color: colors.text },
   photoPreview: { width: 96, height: 96, borderRadius: 8, alignSelf: "center" },
   error: { fontSize: 16, color: colors.danger },
   success: { fontSize: 17, color: colors.success, fontWeight: "600" },

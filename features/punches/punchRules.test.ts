@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { canPunchOnDay, nextPunchType } from "./punchRules.ts";
+import { canPunchOnDay, daysMissingClockOut, nextPunchType } from "./punchRules.ts";
 import type { Punch, PunchApprovalStatus, PunchType } from "../../types/domain.ts";
 
 function punch(type: PunchType, approval_status: PunchApprovalStatus = "pending"): Punch {
@@ -63,4 +63,45 @@ test("fim de semana não permite marcação", () => {
 test("escala diferente muda o que é dia de trabalho", () => {
   // Escala que inclui sábado: a regra vem de company_settings, não do código.
   assert.equal(canPunchOnDay("2026-09-12", [1, 2, 3, 4, 5, 6]), true);
+});
+
+function at(day: string, hora: string, type: PunchType, approval_status: PunchApprovalStatus = "approved"): Punch {
+  return {
+    ...punch(type, approval_status),
+    id: `${day}-${type}-${approval_status}`,
+    // 09:00 em Brasília = 12:00 UTC.
+    occurred_at: `${day}T${hora}:00.000Z`,
+  };
+}
+
+test("aponta o dia em que faltou bater a saída", () => {
+  const rows = [at("2026-09-15", "12:00", "clock_in")];
+  assert.deepEqual(daysMissingClockOut(rows, "2026-09-16"), ["2026-09-15"]);
+});
+
+test("saída aguardando aprovação já conta como registrada", () => {
+  // A funcionária fez a parte dela; o que falta é a revisão do admin. Avisar
+  // "você não registrou" aqui seria falso.
+  const rows = [at("2026-09-15", "12:00", "clock_in"), at("2026-09-15", "21:00", "clock_out", "pending")];
+  assert.deepEqual(daysMissingClockOut(rows, "2026-09-16"), []);
+});
+
+test("saída recusada volta a faltar", () => {
+  const rows = [at("2026-09-15", "12:00", "clock_in"), at("2026-09-15", "21:00", "clock_out", "rejected")];
+  assert.deepEqual(daysMissingClockOut(rows, "2026-09-16"), ["2026-09-15"]);
+});
+
+test("o dia de hoje não é cobrado", () => {
+  const rows = [at("2026-09-16", "12:00", "clock_in")];
+  assert.deepEqual(daysMissingClockOut(rows, "2026-09-16"), []);
+});
+
+test("dia completo não gera aviso, e vários dias vêm do mais recente", () => {
+  const rows = [
+    at("2026-09-14", "12:00", "clock_in"),
+    at("2026-09-14", "21:00", "clock_out"),
+    at("2026-09-11", "12:00", "clock_in"),
+    at("2026-09-15", "12:00", "clock_in"),
+  ];
+  assert.deepEqual(daysMissingClockOut(rows, "2026-09-16"), ["2026-09-15", "2026-09-11"]);
 });
