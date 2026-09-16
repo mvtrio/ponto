@@ -6,6 +6,7 @@ import { Card } from "../../components/ui/Card";
 import { fetchEmployees } from "../../features/admin/adminService";
 import { formatDateTime } from "../../features/corrections/datetime";
 import { fetchPendingPunches, reviewPunch } from "../../features/punches/punchService";
+import { notifyPendingApprovalsChanged } from "../../features/punches/pendingApprovalsSignal";
 import { colors } from "../../lib/theme";
 import { PUNCH_TYPE_LABELS, type Punch } from "../../types/domain";
 
@@ -41,6 +42,8 @@ export default function ApprovalsScreen() {
       await reviewPunch(id, approve);
       // Remove da fila localmente para a lista não "piscar" a cada aprovação.
       setPunches((current) => current.filter((p) => p.id !== id));
+      // Atualiza o sino na hora, em vez de esperar a releitura de um minuto.
+      notifyPendingApprovalsChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao revisar a marcação");
     } finally {

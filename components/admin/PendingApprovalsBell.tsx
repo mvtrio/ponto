@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { countPendingPunches } from "../../features/punches/punchService";
+import { subscribeToPendingApprovals } from "../../features/punches/pendingApprovalsSignal";
 import { colors } from "../../lib/theme";
 
 /** De quanto em quanto tempo o sino reconsulta a contagem. */
@@ -37,8 +38,14 @@ export function PendingApprovalsBell() {
 
   useEffect(() => {
     load();
+    // Releitura periódica cobre o que acontece em outro dispositivo; o sinal cobre o que
+    // acontece aqui mesmo, sem esperar o próximo ciclo.
     const id = setInterval(load, POLL_MS);
-    return () => clearInterval(id);
+    const unsubscribe = subscribeToPendingApprovals(load);
+    return () => {
+      clearInterval(id);
+      unsubscribe();
+    };
   }, [load]);
 
   const hasPending = !failed && count > 0;
