@@ -4,7 +4,7 @@ import type { ChartPoint } from "../../components/charts/MiniLineChart";
 import {
   fetchBalanceSeries,
   fetchOvertimeSeries,
-  fetchPeriodOvertimeTotal,
+  fetchPeriodTotals,
   type Granularity,
 } from "./indicatorsService";
 
@@ -66,13 +66,13 @@ export function useOvertimeSeries(
 }
 
 /** `refreshKey` permite forçar uma recarga (ex.: logo após bater ponto). */
-export function usePeriodOvertimeTotal(
+export function usePeriodTotals(
   employeeId: string | undefined,
   fromDate: string,
   toDate: string,
   refreshKey = 0
 ) {
-  const [totalMinutes, setTotalMinutes] = useState<number | null>(null);
+  const [totals, setTotals] = useState<{ overtimeMinutes: number; deficitMinutes: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,15 +81,15 @@ export function usePeriodOvertimeTotal(
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetchPeriodOvertimeTotal(employeeId, fromDate, toDate)
-      .then((total) => {
-        if (!cancelled) setTotalMinutes(total);
+    fetchPeriodTotals(employeeId, fromDate, toDate)
+      .then((result) => {
+        if (!cancelled) setTotals(result);
       })
       .catch((err) => {
-        // `null` e não 0: zero de horas extras é um resultado válido, falha não é.
+        // `null` e não zeros: zero de extras é um resultado válido, falha não é.
         if (!cancelled) {
-          setTotalMinutes(null);
-          setError(err instanceof Error ? err.message : "Erro ao calcular as horas extras");
+          setTotals(null);
+          setError(err instanceof Error ? err.message : "Erro ao calcular extras e débito");
         }
       })
       .finally(() => {
@@ -100,5 +100,10 @@ export function usePeriodOvertimeTotal(
     };
   }, [employeeId, fromDate, toDate, refreshKey]);
 
-  return { totalMinutes, loading, error };
+  return {
+    overtimeMinutes: totals?.overtimeMinutes ?? null,
+    deficitMinutes: totals?.deficitMinutes ?? null,
+    loading,
+    error,
+  };
 }

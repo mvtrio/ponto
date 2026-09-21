@@ -9,7 +9,7 @@ import { IndicatorCard } from "../../components/history/IndicatorCard";
 import { PeriodFilter } from "../../components/history/PeriodFilter";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import type { Granularity } from "../../features/hours/indicatorsService";
-import { useBalanceSeries, useOvertimeSeries, usePeriodOvertimeTotal } from "../../features/hours/useIndicators";
+import { useBalanceSeries, useOvertimeSeries, usePeriodTotals } from "../../features/hours/useIndicators";
 import { useDetailedDayRows } from "../../features/hours/useDetailedDayRows";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
@@ -38,7 +38,11 @@ export default function BankScreen() {
     balanceGranularity
   );
   const { points: overtimePoints } = useOvertimeSeries(profile?.id, fromDate, toDate, overtimeGranularity);
-  const { totalMinutes: overtimeTotal } = usePeriodOvertimeTotal(profile?.id, fromDate, toDate);
+  const { overtimeMinutes: overtimeTotal, deficitMinutes: deficitTotal } = usePeriodTotals(
+    profile?.id,
+    fromDate,
+    toDate
+  );
   const { rows: detailedRows, loading: loadingDetailed } = useDetailedDayRows(profile?.id, fromDate, toDate);
 
   const currentBalance = balancePoints.length ? balancePoints[balancePoints.length - 1].value : 0;
@@ -85,6 +89,12 @@ export default function BankScreen() {
               </Text>
             </View>
             <Text style={styles.overtimeHint}>Horas Extras no Período</Text>
+            <View style={styles.deficitRow}>
+              <Ionicons name="alert-circle-outline" size={18} color={colors.danger} />
+              <Text style={styles.deficitValue}>
+                Débito: {deficitTotal === null ? "—" : formatMinutes(deficitTotal)}
+              </Text>
+            </View>
             <MiniBarChart points={overtimePoints} color={colors.success} />
           </IndicatorCard>
         </View>
@@ -115,4 +125,6 @@ const styles = StyleSheet.create({
   overtimeHeadline: { flexDirection: "row", alignItems: "center", gap: 6 },
   overtimeValue: { fontSize: 24, fontWeight: "700", color: colors.success },
   overtimeHint: { fontSize: 12, color: colors.textFaint },
+  deficitRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
+  deficitValue: { fontSize: 16, fontWeight: "700", color: colors.danger },
 });

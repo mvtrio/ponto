@@ -24,7 +24,7 @@ import { canPunchOnDay, daysMissingClockOut } from "../../features/punches/punch
 import { useCompanySettings } from "../../features/company/useCompanySettings";
 import { usePunchHistory } from "../../features/punches/usePunchHistory";
 import { useHourBank } from "../../features/hours/useHourBank";
-import { usePeriodOvertimeTotal } from "../../features/hours/useIndicators";
+import { usePeriodTotals } from "../../features/hours/useIndicators";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
 import { appDate, appDaysAgo, appToday, startOfAppDay } from "../../lib/appDate";
@@ -69,12 +69,11 @@ export default function ClockScreen() {
 
   const [fromDate, toDate] = useMemo(() => [appDaysAgo(WINDOW_DAYS - 1), appDaysAgo(0)], []);
   const { balanceMinutes, loading: loadingBalance, error: balanceError } = useHourBank(profile?.id, refreshKey);
-  const { totalMinutes: overtimeTotal, error: overtimeError } = usePeriodOvertimeTotal(
-    profile?.id,
-    fromDate,
-    toDate,
-    refreshKey
-  );
+  const {
+    overtimeMinutes: overtimeTotal,
+    deficitMinutes: deficitTotal,
+    error: overtimeError,
+  } = usePeriodTotals(profile?.id, fromDate, toDate, refreshKey);
   const history = usePunchHistory(profile?.id, WINDOW_DAYS, refreshKey);
   const { settings, loading: loadingSettings, error: settingsError } = useCompanySettings();
 
@@ -287,6 +286,12 @@ export default function ClockScreen() {
             <Text style={styles.totalLabel}>Horas extras ({WINDOW_DAYS} dias)</Text>
             <Text style={[styles.totalValue, { color: colors.success }]}>
               {overtimeTotal === null ? "—" : formatMinutes(overtimeTotal)}
+            </Text>
+          </View>
+          <View style={styles.total}>
+            <Text style={styles.totalLabel}>Débito ({WINDOW_DAYS} dias)</Text>
+            <Text style={[styles.totalValue, { color: colors.danger }]}>
+              {deficitTotal === null ? "—" : formatMinutes(deficitTotal)}
             </Text>
           </View>
         </View>

@@ -1,5 +1,6 @@
 import type { ChartPoint } from "../../components/charts/MiniLineChart";
 import { fetchDailySummaries, fetchHourBankBalance } from "./hoursService";
+import { sumPeriodTotals, type PeriodTotals } from "./periodTotals";
 
 export type Granularity = "day" | "week" | "month";
 
@@ -102,7 +103,11 @@ export async function fetchOvertimeSeries(
   return Array.from(buckets.values());
 }
 
-export async function fetchPeriodOvertimeTotal(employeeId: string, fromDate: string, toDate: string): Promise<number> {
-  const daily = await fetchDailySummaries(employeeId, fromDate, toDate);
-  return daily.reduce((sum, row) => sum + Math.max(row.balance_minutes, 0), 0);
+/** Extras e débito do período, em uma consulta só. */
+export async function fetchPeriodTotals(
+  employeeId: string,
+  fromDate: string,
+  toDate: string
+): Promise<PeriodTotals> {
+  return sumPeriodTotals(await fetchDailySummaries(employeeId, fromDate, toDate));
 }
