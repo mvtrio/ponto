@@ -77,6 +77,10 @@ export default function AdminLayout() {
         options={{ title: "Aprovações", tabBarLabel: "Aprovar", tabBarIcon: tabIcon("checkmark-circle") }}
       />
       <Tabs.Screen
+        name="adjustments"
+        options={{ title: "Horas a compensar", tabBarLabel: "Compensar", tabBarIcon: tabIcon("swap-vertical") }}
+      />
+      <Tabs.Screen
         name="corrections"
         options={{ title: "Correções", tabBarLabel: "Correções", tabBarIcon: tabIcon("create") }}
       />
