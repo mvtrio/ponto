@@ -81,10 +81,6 @@ export default function AdminLayout() {
         options={{ title: "Horas a compensar", tabBarLabel: "Compensar", tabBarIcon: tabIcon("swap-vertical") }}
       />
       <Tabs.Screen
-        name="closing"
-        options={{ title: "Fechamento do mês", tabBarLabel: "Fechamento", tabBarIcon: tabIcon("lock-closed") }}
-      />
-      <Tabs.Screen
         name="absences"
         options={{ title: "Atestados e folgas", tabBarLabel: "Atestados", tabBarIcon: tabIcon("medkit") }}
       />
@@ -95,6 +91,10 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="reports"
         options={{ title: "Relatórios", tabBarLabel: "Relatórios", tabBarIcon: tabIcon("document-text") }}
+      />
+      <Tabs.Screen
+        name="closing"
+        options={{ title: "Fechamento do mês", tabBarLabel: "Fechamento", tabBarIcon: tabIcon("lock-closed") }}
       />
       <Tabs.Screen
         name="settings"
