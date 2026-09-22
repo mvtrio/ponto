@@ -81,6 +81,10 @@ export default function AdminLayout() {
         options={{ title: "Horas a compensar", tabBarLabel: "Compensar", tabBarIcon: tabIcon("swap-vertical") }}
       />
       <Tabs.Screen
+        name="absences"
+        options={{ title: "Atestados e folgas", tabBarLabel: "Atestados", tabBarIcon: tabIcon("medkit") }}
+      />
+      <Tabs.Screen
         name="corrections"
         options={{ title: "Correções", tabBarLabel: "Correções", tabBarIcon: tabIcon("create") }}
       />
