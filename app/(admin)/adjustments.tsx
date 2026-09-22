@@ -242,7 +242,9 @@ export default function AdjustmentsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, gap: 16 },
-  card: { gap: 10 },
+  // Mesma largura contida das outras telas de formulário: campo esticado de ponta
+  // a ponta do monitor fica difícil de ler e de mirar.
+  card: { gap: 10, alignSelf: "center", width: "100%", maxWidth: 560 },
   title: { fontSize: 24, fontWeight: "700", color: colors.text },
   sectionTitle: { fontSize: 20, fontWeight: "700", color: colors.text },
   hint: { fontSize: 14, color: colors.textFaint },
