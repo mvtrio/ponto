@@ -1,4 +1,5 @@
 import { supabase } from "../../lib/supabase";
+import { asError } from "../../lib/supabaseError";
 import { fetchEmployees } from "./adminService";
 
 export interface BalanceAdjustment {
@@ -38,7 +39,7 @@ export async function fetchAdjustments(limit = 100): Promise<AdjustmentWithName[
     fetchEmployees(),
   ]);
 
-  if (error) throw error;
+  if (error) throw asError(error, "Erro ao carregar os lançamentos.");
 
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
   return ((data ?? []) as unknown as BalanceAdjustment[]).map((row) => ({
@@ -55,10 +56,10 @@ export async function createAdjustment(input: NewAdjustmentInput): Promise<void>
     reason: input.reason,
     created_by: input.createdBy,
   });
-  if (error) throw error;
+  if (error) throw asError(error, "Erro ao registrar o lançamento.");
 }
 
 export async function deleteAdjustment(id: string): Promise<void> {
   const { error } = await supabase.from("balance_adjustments").delete().eq("id", id);
-  if (error) throw error;
+  if (error) throw asError(error, "Erro ao remover o lançamento.");
 }

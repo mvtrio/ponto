@@ -24,7 +24,7 @@ export default function EmployeeDetailScreen() {
   const fromDate = appDaysAgo(30);
   const toDate = appDaysAgo(0);
   const { summaries, loading, error } = useDailySummaries(id, fromDate, toDate);
-  const { balanceMinutes } = useHourBank(id);
+  const { debitMinutes, overtimeMinutes } = useHourBank(id);
 
   const [fullName, setFullName] = useState("");
   const [employeeCode, setEmployeeCode] = useState("");
@@ -129,14 +129,20 @@ export default function EmployeeDetailScreen() {
           <>
             <View style={styles.header}>
               <Text style={styles.balanceLabel}>Banco de horas</Text>
-              <Text
-                style={[
-                  styles.balanceValue,
-                  { color: (balanceMinutes ?? 0) >= 0 ? colors.success : colors.danger },
-                ]}
-              >
-                {balanceMinutes !== null ? formatMinutes(balanceMinutes) : "—"}
-              </Text>
+              <View style={styles.balanceRow}>
+                <View>
+                  <Text style={styles.balanceCaption}>Débito</Text>
+                  <Text style={[styles.balanceValue, { color: colors.danger }]}>
+                    {debitMinutes !== null ? formatMinutes(debitMinutes) : "—"}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.balanceCaption}>Horas extras</Text>
+                  <Text style={[styles.balanceValue, { color: colors.success }]}>
+                    {overtimeMinutes !== null ? formatMinutes(overtimeMinutes) : "—"}
+                  </Text>
+                </View>
+              </View>
             </View>
 
             <Card style={styles.card}>
@@ -266,6 +272,8 @@ const styles = StyleSheet.create({
   header: { padding: 16, backgroundColor: colors.surface, alignItems: "center", gap: 4, marginBottom: 16 },
   balanceLabel: { fontSize: 12, color: colors.textMuted },
   balanceValue: { fontSize: 24, fontWeight: "700" },
+  balanceRow: { flexDirection: "row", gap: 24 },
+  balanceCaption: { fontSize: 12, color: colors.textFaint },
   list: { padding: 16, paddingTop: 0 },
   card: { gap: 12, marginBottom: 16 },
   label: { fontSize: 13, color: colors.textMuted, marginTop: 4 },

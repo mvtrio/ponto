@@ -1,4 +1,5 @@
 import { supabase } from "../../lib/supabase";
+import { asError } from "../../lib/supabaseError";
 import { fetchEmployees } from "./adminService";
 import type { AbsenceKind } from "./absenceInput";
 
@@ -33,7 +34,7 @@ export async function fetchAbsences(limit = 200): Promise<AbsenceWithName[]> {
     fetchEmployees(),
   ]);
 
-  if (error) throw error;
+  if (error) throw asError(error, "Erro ao carregar os registros de ausência.");
 
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
   return ((data ?? []) as unknown as JustifiedAbsence[]).map((row) => ({
@@ -59,10 +60,10 @@ export async function createAbsences(input: NewAbsenceInput): Promise<void> {
   const { error } = await supabase
     .from("justified_absences")
     .upsert(rows, { onConflict: "employee_id,day", ignoreDuplicates: true });
-  if (error) throw error;
+  if (error) throw asError(error, "Erro ao registrar o atestado/folga.");
 }
 
 export async function deleteAbsence(id: string): Promise<void> {
   const { error } = await supabase.from("justified_absences").delete().eq("id", id);
-  if (error) throw error;
+  if (error) throw asError(error, "Erro ao remover o registro.");
 }

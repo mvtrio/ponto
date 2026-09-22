@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -24,10 +24,9 @@ import { canPunchOnDay, daysMissingClockOut } from "../../features/punches/punch
 import { useCompanySettings } from "../../features/company/useCompanySettings";
 import { usePunchHistory } from "../../features/punches/usePunchHistory";
 import { useHourBank } from "../../features/hours/useHourBank";
-import { usePeriodTotals } from "../../features/hours/useIndicators";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
-import { appDate, appDaysAgo, appToday, startOfAppDay } from "../../lib/appDate";
+import { appDate, appToday, startOfAppDay } from "../../lib/appDate";
 import { weekdayName } from "../../components/ui/weekdayNames";
 import { formatMinutes, type ActivePunchType, type Punch } from "../../types/domain";
 
@@ -67,13 +66,12 @@ export default function ClockScreen() {
   const selectedDay = appDate(punchAt);
   const isToday = selectedDay === appToday();
 
-  const [fromDate, toDate] = useMemo(() => [appDaysAgo(WINDOW_DAYS - 1), appDaysAgo(0)], []);
-  const { balanceMinutes, loading: loadingBalance, error: balanceError } = useHourBank(profile?.id, refreshKey);
   const {
-    overtimeMinutes: overtimeTotal,
-    deficitMinutes: deficitTotal,
-    error: overtimeError,
-  } = usePeriodTotals(profile?.id, fromDate, toDate, refreshKey);
+    debitMinutes,
+    overtimeMinutes,
+    loading: loadingBalance,
+    error: balanceError,
+  } = useHourBank(profile?.id, refreshKey);
   const history = usePunchHistory(profile?.id, WINDOW_DAYS, refreshKey);
   const { settings, loading: loadingSettings, error: settingsError } = useCompanySettings();
 
@@ -157,9 +155,7 @@ export default function ClockScreen() {
     }
   }
 
-  const balance = balanceMinutes ?? 0;
-  const balanceColor = balance >= 0 ? colors.success : colors.danger;
-  const bankError = balanceError ?? overtimeError ?? history.error;
+  const bankError = balanceError ?? history.error;
 
   // Dias passados com entrada e sem saída. Saída pendente de aprovação já conta como
   // registrada — quem precisa agir nesse caso é o admin, não ela.
@@ -277,24 +273,23 @@ export default function ClockScreen() {
         <Text style={styles.sectionTitle}>Banco de horas</Text>
         <View style={styles.totalsRow}>
           <View style={styles.total}>
-            <Text style={styles.totalLabel}>Saldo acumulado</Text>
-            <Text style={[styles.totalValue, { color: balanceColor }]}>
-              {loadingBalance ? "…" : balanceError ? "—" : formatMinutes(balance)}
-            </Text>
-          </View>
-          <View style={styles.total}>
-            <Text style={styles.totalLabel}>Horas extras ({WINDOW_DAYS} dias)</Text>
-            <Text style={[styles.totalValue, { color: colors.success }]}>
-              {overtimeTotal === null ? "—" : formatMinutes(overtimeTotal)}
-            </Text>
-          </View>
-          <View style={styles.total}>
-            <Text style={styles.totalLabel}>Débito ({WINDOW_DAYS} dias)</Text>
+            <Text style={styles.totalLabel}>Débito acumulado</Text>
             <Text style={[styles.totalValue, { color: colors.danger }]}>
-              {deficitTotal === null ? "—" : formatMinutes(deficitTotal)}
+              {loadingBalance ? "…" : debitMinutes === null ? "—" : formatMinutes(debitMinutes)}
+            </Text>
+          </View>
+          <View style={styles.total}>
+            <Text style={styles.totalLabel}>Horas extras</Text>
+            <Text style={[styles.totalValue, { color: colors.success }]}>
+              {loadingBalance ? "…" : overtimeMinutes === null ? "—" : formatMinutes(overtimeMinutes)}
             </Text>
           </View>
         </View>
+        {/* Os dois lados andam separados até o fechamento; dizer isso evita a pergunta
+            "por que não descontaram minhas extras?". */}
+        <Text style={styles.bankHint}>
+          As horas extras abatem o débito no fechamento do mês.
+        </Text>
         {bankError ? <Text style={styles.error}>{bankError}</Text> : null}
       </Card>
 
@@ -356,4 +351,5 @@ const styles = StyleSheet.create({
   total: { gap: 4 },
   totalLabel: { fontSize: 17, color: colors.textMuted },
   totalValue: { fontSize: 44, fontWeight: "700" },
+  bankHint: { fontSize: 15, color: colors.textFaint },
 });
