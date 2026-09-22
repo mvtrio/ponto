@@ -44,6 +44,9 @@ export default function AdjustmentsScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // Confirmação na própria linha em vez de Alert/confirm: o Alert do React Native não
+  // funciona na web e o confirm() do navegador trava a tela até alguém responder.
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -118,7 +121,10 @@ export default function AdjustmentsScreen() {
     try {
       await deleteAdjustment(id);
       setList((current) => current.filter((row) => row.id !== id));
+      setConfirmingId(null);
     } catch (err) {
+      // A linha continua na tela e em modo de confirmação: se a remoção falhou, sumir
+      // com ela daria a impressão de que deu certo.
       setError(err instanceof Error ? err.message : "Erro ao remover o lançamento");
     } finally {
       setRemovingId(null);
@@ -213,25 +219,54 @@ export default function AdjustmentsScreen() {
 
         {list.map((row) => (
           <View key={row.id} style={styles.row}>
-            <View style={styles.rowInfo}>
-              <Text style={styles.rowName}>{row.employeeName}</Text>
-              <Text style={styles.rowDetail}>{formatDay(row.day)}</Text>
-              <Text style={styles.rowReason}>{row.reason}</Text>
+            <View style={styles.rowTop}>
+              <View style={styles.rowInfo}>
+                <Text style={styles.rowName}>{row.employeeName}</Text>
+                <Text style={styles.rowDetail}>{formatDay(row.day)}</Text>
+                <Text style={styles.rowReason}>{row.reason}</Text>
+              </View>
+              <Text
+                style={[styles.rowValue, { color: row.minutes >= 0 ? colors.success : colors.danger }]}
+              >
+                {row.minutes > 0 ? "+" : ""}
+                {formatMinutes(row.minutes)}
+              </Text>
+              {confirmingId === row.id ? null : (
+                <Pressable
+                  onPress={() => setConfirmingId(row.id)}
+                  style={styles.removeButton}
+                  accessibilityLabel={`Remover lançamento de ${row.employeeName}`}
+                >
+                  <Ionicons name="trash-outline" size={22} color={colors.danger} />
+                </Pressable>
+              )}
             </View>
-            <Text
-              style={[styles.rowValue, { color: row.minutes >= 0 ? colors.success : colors.danger }]}
-            >
-              {row.minutes > 0 ? "+" : ""}
-              {formatMinutes(row.minutes)}
-            </Text>
-            <Pressable
-              onPress={() => handleDelete(row.id)}
-              disabled={removingId === row.id}
-              style={styles.removeButton}
-              accessibilityLabel={`Remover lançamento de ${row.employeeName}`}
-            >
-              <Ionicons name="trash-outline" size={22} color={colors.danger} />
-            </Pressable>
+
+            {confirmingId === row.id ? (
+              <View style={styles.confirmBox}>
+                <Text style={styles.confirmText}>
+                  Apagar este lançamento? O saldo do funcionário volta ao que era.
+                </Text>
+                <View style={styles.confirmButtons}>
+                  <Pressable
+                    onPress={() => setConfirmingId(null)}
+                    disabled={removingId === row.id}
+                    style={[styles.confirmButton, styles.cancelButton]}
+                  >
+                    <Text style={styles.cancelText}>Cancelar</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleDelete(row.id)}
+                    disabled={removingId === row.id}
+                    style={[styles.confirmButton, styles.deleteButton]}
+                  >
+                    <Text style={styles.deleteText}>
+                      {removingId === row.id ? "Apagando…" : "Apagar"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : null}
           </View>
         ))}
       </Card>
@@ -278,13 +313,27 @@ const styles = StyleSheet.create({
   success: { fontSize: 16, color: colors.success },
   error: { fontSize: 16, color: colors.danger },
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+    gap: 10,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  rowTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  confirmBox: {
+    gap: 10,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  confirmText: { fontSize: 15, color: colors.text },
+  confirmButtons: { flexDirection: "row", gap: 10 },
+  confirmButton: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: "center" },
+  cancelButton: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  cancelText: { fontSize: 16, fontWeight: "600", color: colors.text },
+  deleteButton: { backgroundColor: colors.danger },
+  deleteText: { fontSize: 16, fontWeight: "700", color: "#fff" },
   rowInfo: { flex: 1, minWidth: 180, gap: 2 },
   rowName: { fontSize: 17, fontWeight: "700", color: colors.text },
   rowDetail: { fontSize: 15, color: colors.textMuted },
