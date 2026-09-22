@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { ScreenGuide } from "../../components/ui/ScreenGuide";
 import { fetchEmployees } from "../../features/admin/adminService";
 import {
   applyOvertimeToDebit,
@@ -140,12 +141,25 @@ export default function ClosingScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScreenGuide
+        summary="Durante o mês, o débito e as horas extras andam separados e não se descontam. É aqui que eles se encontram: uma vez por mês, as extras abatem o débito e o que sobrar passa para o mês seguinte. Faça isso a partir do dia 1º do mês seguinte."
+        steps={[
+          "Antes de tudo: resolva as pendências do mês — aprove os pontos na tela Aprovar, lance os atestados e as correções que faltarem. Depois de fechado, o mês já estará contabilizado.",
+          "Escolha a funcionária.",
+          "Informe o mês a fechar, no formato AAAA-MM (exemplo: 2026-09 para setembro).",
+          "Leia a prévia “Se fechar”: ela mostra exatamente o que vai acontecer, apurado até o último dia do mês — que não é o mesmo saldo de hoje.",
+          "Clique em Fechar o mês.",
+        ]}
+        result="As horas extras abatem o débito até onde alcançam. Se sobrar débito, ele segue para o mês seguinte; se sobrar extra, vira crédito para o mês seguinte. Nunca sobra dos dois lados. O mês fechado aparece na lista abaixo com todo o histórico."
+        notFor={[
+          "Fechar o mês em curso — só depois que ele termina, senão os dias que faltam sumiriam da apuração.",
+          "Apagar ou corrigir marcações — use Correções antes de fechar.",
+          "Reabrir um mês do meio: se precisar desfazer, use o cadeado, mas só o último mês fechado pode ser reaberto.",
+        ]}
+      />
+
       <Card style={styles.card}>
         <Text style={styles.title}>Fechamento do mês</Text>
-        <Text style={styles.hint}>
-          No fechamento as horas extras abatem o débito acumulado. O que sobrar de um dos lados segue
-          para o mês seguinte.
-        </Text>
 
         <Text style={styles.label}>Funcionário</Text>
         <View style={styles.chipRow}>

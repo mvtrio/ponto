@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { ScreenGuide } from "../../components/ui/ScreenGuide";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { WeekdayLabel } from "../../components/ui/WeekdayLabel";
 import { fetchEmployees } from "../../features/admin/adminService";
@@ -124,12 +125,26 @@ export default function AbsencesScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScreenGuide
+        summary="Use esta tela quando a funcionária faltou e a ausência é justificada. Sem este registro, o sistema lança falta no dia útil sem marcação e cobra a jornada inteira em saldo devedor."
+        steps={[
+          "Escolha a funcionária.",
+          "Escolha Atestado ou Folga.",
+          "Informe a data inicial em “Do dia”.",
+          "Se a ausência durou vários dias, preencha “Até o dia”. Para um dia só, deixe vazio.",
+          "Se quiser, anote uma observação — onde está o atestado, quem autorizou a folga.",
+          "Clique em Registrar.",
+        ]}
+        result="Os dias registrados deixam de ser cobrados: não viram falta e não entram em saldo devedor. É como se fossem feriado, mas valendo só para essa funcionária. Se remover o registro depois, o dia volta a ser cobrado e pode virar falta de novo."
+        notFor={[
+          "Fim de semana e feriado — esses já não são cobrados, não precisa registrar.",
+          "Dia em que ela trabalhou e esqueceu de bater o ponto — use a tela Correções.",
+          "Compensar horas trabalhadas a mais — use a tela Compensar.",
+        ]}
+      />
+
       <Card style={styles.card}>
         <Text style={styles.title}>Atestados e folgas</Text>
-        <Text style={styles.hint}>
-          Dia registrado aqui não vira falta e não entra em saldo devedor. Use quando a ausência for
-          justificada — o dia simplesmente não é cobrado.
-        </Text>
 
         <Text style={styles.label}>Funcionário</Text>
         <View style={styles.chipRow}>

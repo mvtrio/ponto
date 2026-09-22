@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { ScreenGuide } from "../../components/ui/ScreenGuide";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { WeekdayLabel } from "../../components/ui/WeekdayLabel";
 import { fetchEmployees } from "../../features/admin/adminService";
@@ -133,12 +134,26 @@ export default function AdjustmentsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScreenGuide
+        summary="Use esta tela para lançar horas que foram anotadas no papel, fora do sistema — um mutirão de sábado, uma hora a mais que ficou combinada. São horas que existiram de verdade, mas que o relógio de ponto não registrou."
+        steps={[
+          "Escolha a funcionária.",
+          "Escolha Creditar (horas a favor dela) ou Debitar (horas que ela deve).",
+          "Informe a data de referência — o dia a que essas horas se referem.",
+          "Preencha quantas horas e minutos.",
+          "Escreva de onde vêm essas horas. É obrigatório: daqui a seis meses, um “+2h” sem explicação não se defende.",
+          "Clique em Lançar.",
+        ]}
+        result="O valor entra imediatamente no banco de horas: creditar soma nas horas extras, debitar soma no débito. Não passa por aprovação, porque quem lança já é quem aprovaria. Os dois lados só se encontram no Fechamento do mês. Errou? Apague na lista abaixo e lance de novo — o saldo é recalculado sozinho."
+        notFor={[
+          "Dia em que ela faltou com atestado ou folga — use a tela Atestados.",
+          "Ponto que ela esqueceu de bater — use a tela Correções, que registra a entrada e a saída reais.",
+          "Abater as extras do débito — isso acontece sozinho no Fechamento.",
+        ]}
+      />
+
       <Card style={styles.card}>
         <Text style={styles.title}>Horas a compensar</Text>
-        <Text style={styles.hint}>
-          Para horas anotadas fora do sistema. O valor entra direto no banco de horas do funcionário — não passa
-          por aprovação, porque quem lança já é quem aprovaria.
-        </Text>
 
         <Text style={styles.label}>Funcionário</Text>
         <View style={styles.chipRow}>
