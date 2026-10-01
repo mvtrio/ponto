@@ -7,8 +7,10 @@ export interface EmployeeReport {
   /** Dias com entrada e saída registradas. */
   daysWorked: number;
   daysIncomplete: number;
-  /** Dias úteis sem marcação alguma. */
+  /** Dias úteis sem marcação alguma e sem justificativa. */
   daysAbsent: number;
+  /** Dias cobertos por atestado ou folga: aparecem no relatório e não pesam no saldo. */
+  daysJustified: number;
   daysPending: number;
   /** Soma dos saldos diários já apurados (pendentes não entram). */
   balanceMinutes: number;
@@ -38,6 +40,7 @@ export function buildReportData(rows: OverviewRow[]): EmployeeReport[] {
         daysWorked: 0,
         daysIncomplete: 0,
         daysAbsent: 0,
+        daysJustified: 0,
         daysPending: 0,
         balanceMinutes: 0,
         overtimeMinutes: 0,
@@ -54,6 +57,9 @@ export function buildReportData(rows: OverviewRow[]): EmployeeReport[] {
     }
     if (row.status === "ok") report.daysWorked += 1;
     else if (row.status === "absent") report.daysAbsent += 1;
+    // Atestado e folga não são falta nem dia incompleto: somá-los ali acusaria uma
+    // ausência que o admin já justificou.
+    else if (row.status === "atestado" || row.status === "folga") report.daysJustified += 1;
     else report.daysIncomplete += 1;
 
     if (row.balanceMinutes !== null) {

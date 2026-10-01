@@ -11,6 +11,17 @@ const STATUS_ICON: Record<DetailedDayRow["status"], { name: keyof typeof Ionicon
   folga: { name: "checkmark-circle", color: colors.success },
   holiday: { name: "flag", color: colors.accent },
   absent: { name: "close-circle", color: colors.danger },
+  atestado: { name: "medkit", color: colors.accent },
+  folga_justificada: { name: "cafe", color: colors.accent },
+};
+
+/** Texto que ocupa as colunas de horário quando não houve marcação no dia. */
+const NO_PUNCH_LABEL: Partial<Record<DetailedDayRow["status"], string>> = {
+  folga: "FOLGA",
+  holiday: "FERIADO",
+  absent: "FALTA",
+  atestado: "ATESTADO",
+  folga_justificada: "FOLGA",
 };
 
 // Dimensões generosas: a tabela é lida no dia a dia por quem enxerga mal, então
@@ -66,9 +77,13 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
           const isFolga = row.status === "folga";
           const isAbsent = row.status === "absent";
           const isHoliday = row.status === "holiday";
+          const isJustified = row.status === "atestado" || row.status === "folga_justificada";
+          const noPunchLabel = NO_PUNCH_LABEL[row.status];
           const timeColor =
             isFolga || isHoliday
               ? colors.textFaint
+              : isJustified
+              ? colors.accent
               : isAbsent
               ? colors.danger
               : row.status === "warning"
@@ -87,7 +102,7 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
               </Cell>
               {TIME_COLUMNS.map(({ key }) => (
                 <Cell key={key} width={COLUMN_WIDTH} color={timeColor}>
-                  {isFolga ? "FOLGA" : isHoliday ? "FERIADO" : isAbsent ? "FALTA" : row[key] ?? "—"}
+                  {noPunchLabel ?? row[key] ?? "—"}
                 </Cell>
               ))}
               {row.hasPending ? (

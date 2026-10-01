@@ -83,6 +83,8 @@ export interface CompanySettings {
   updated_at: string;
 }
 
+export type AbsenceKind = "atestado" | "folga";
+
 export interface DailySummary {
   employee_id: string;
   day: string;
@@ -90,6 +92,8 @@ export interface DailySummary {
   is_incomplete: boolean;
   standard_daily_minutes: number;
   balance_minutes: number;
+  /** Ausência justificada registrada pelo admin: o dia não é cobrado, mas aparece. */
+  absence_kind: AbsenceKind | null;
 }
 
 export function formatMinutes(totalMinutes: number): string {

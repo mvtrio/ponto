@@ -12,8 +12,15 @@ function day(balance_minutes: number): DailySummary {
     is_incomplete: false,
     standard_daily_minutes: 480,
     balance_minutes,
+    absence_kind: null,
   };
 }
+
+test("dia justificado tem saldo zero e não mexe em extras nem em débito", () => {
+  const totais = sumPeriodTotals([day(60), { ...day(0), absence_kind: "atestado" }, day(-30)]);
+  assert.equal(totais.overtimeMinutes, 60);
+  assert.equal(totais.deficitMinutes, 30);
+});
 
 test("separa o que é extra do que é débito", () => {
   const totais = sumPeriodTotals([day(60), day(-30), day(15)]);

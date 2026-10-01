@@ -1,7 +1,14 @@
 import { appDate, appTime } from "../../lib/appDate.ts";
-import type { DailySummary, Punch } from "../../types/domain.ts";
+import type { AbsenceKind, DailySummary, Punch } from "../../types/domain.ts";
 
-export type OverviewStatus = "ok" | "incomplete" | "pending" | "rejected" | "absent";
+export type OverviewStatus =
+  | "ok"
+  | "incomplete"
+  | "pending"
+  | "rejected"
+  | "absent"
+  | "atestado"
+  | "folga";
 
 export interface OverviewRow {
   key: string;
@@ -24,6 +31,10 @@ export function buildOverviewRows(
   nameById: Map<string, string>
 ): OverviewRow[] {
   const balanceByKey = new Map(summaries.map((s) => [`${s.employee_id}|${s.day}`, s.balance_minutes]));
+  const absenceByKey = new Map<string, AbsenceKind>();
+  for (const s of summaries) {
+    if (s.absence_kind) absenceByKey.set(`${s.employee_id}|${s.day}`, s.absence_kind);
+  }
 
   const byKey = new Map<string, { employeeId: string; day: string; punches: Punch[] }>();
   for (const punch of punches) {
@@ -53,12 +64,16 @@ export function buildOverviewRows(
     const hasPending = valid.some((p) => p.approval_status === "pending");
     const hasRejected = entry.punches.some((p) => p.approval_status === "rejected");
 
+    // Atestado e folga valem como explicação do dia, não como ausência: sem isto o dia
+    // justificado apareceria como falta ou sumiria do quadro e do relatório.
+    const absenceKind = absenceByKey.get(key);
+
     // Pendente domina: é o que exige ação do admin. "Recusada" só vira o status do dia
     // quando não sobrou nenhuma marcação válida — senão o dia ainda conta como incompleto.
     const status: OverviewStatus = hasPending
       ? "pending"
       : entry.punches.length === 0
-      ? "absent"
+      ? absenceKind ?? "absent"
       : !clockIn || !clockOut
       ? hasRejected && valid.length === 0
         ? "rejected"

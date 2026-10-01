@@ -18,6 +18,8 @@ const STATUS_META: Record<
   incomplete: { label: "Incompleto", color: colors.warning, icon: "warning" },
   rejected: { label: "Recusada", color: colors.danger, icon: "close-circle" },
   absent: { label: "Falta", color: colors.danger, icon: "close-circle" },
+  atestado: { label: "Atestado", color: colors.accent, icon: "medkit" },
+  folga: { label: "Folga", color: colors.accent, icon: "cafe" },
 };
 
 function formatDay(day: string): string {
@@ -46,6 +48,12 @@ function Totals({ report }: { report: EmployeeReport }) {
         <Text style={styles.totalLabel}>Faltas</Text>
         <Text style={[styles.totalValue, report.daysAbsent > 0 && { color: colors.danger }]}>
           {report.daysAbsent}
+        </Text>
+      </View>
+      <View style={styles.total}>
+        <Text style={styles.totalLabel}>Atestado/folga</Text>
+        <Text style={[styles.totalValue, report.daysJustified > 0 && { color: colors.accent }]}>
+          {report.daysJustified}
         </Text>
       </View>
       <View style={styles.total}>

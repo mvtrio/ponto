@@ -31,7 +31,12 @@ function punch(
   };
 }
 
-function summary(employee_id: string, day: string, balance_minutes: number): DailySummary {
+function summary(
+  employee_id: string,
+  day: string,
+  balance_minutes: number,
+  absence_kind: DailySummary["absence_kind"] = null
+): DailySummary {
   return {
     employee_id,
     day,
@@ -39,8 +44,28 @@ function summary(employee_id: string, day: string, balance_minutes: number): Dai
     is_incomplete: false,
     standard_daily_minutes: 480,
     balance_minutes,
+    absence_kind,
   };
 }
+
+test("dia com atestado aparece como atestado, não como falta", () => {
+  // A regressão que motivou isto: o dia justificado sumia do quadro e do relatório.
+  const rows = buildOverviewRows([], [summary("e1", "2026-09-29", 0, "atestado")], NAMES);
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].status, "atestado");
+  assert.equal(rows[0].balanceMinutes, 0);
+});
+
+test("folga justificada tem status próprio, separado de falta", () => {
+  const rows = buildOverviewRows([], [summary("e1", "2026-09-29", 0, "folga")], NAMES);
+  assert.equal(rows[0].status, "folga");
+});
+
+test("dia útil sem marcação e sem justificativa continua sendo falta", () => {
+  const rows = buildOverviewRows([], [summary("e1", "2026-09-18", -480)], NAMES);
+  assert.equal(rows[0].status, "absent");
+});
 
 test("dia com par aprovado fica completo e mostra o saldo", () => {
   const rows = buildOverviewRows(
