@@ -1,22 +1,58 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState } from "react";
 import { useFocusEffect, router } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { BalanceBarChart } from "../../components/charts/BalanceBarChart";
+import { DailyBalanceChart } from "../../components/charts/DailyBalanceChart";
 import { Card } from "../../components/ui/Card";
-import { fetchEmployees } from "../../features/admin/adminService";
-import { fetchHourBankBalance } from "../../features/hours/hoursService";
+import { fetchDashboardData, type DashboardData } from "../../features/admin/dashboardService";
 import { colors } from "../../lib/theme";
 import { formatMinutes } from "../../types/domain";
 
-interface BalanceRow {
-  id: string;
-  fullName: string;
-  balanceMinutes: number;
+function formatPercent(rate: number | null): string {
+  return rate === null ? "—" : `${Math.round(rate * 100)}%`;
+}
+
+/** Cartão de pendência: só aparece em destaque quando há algo a fazer. */
+function ActionCard({
+  icon,
+  label,
+  count,
+  href,
+  tone,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  count: number;
+  href: string;
+  tone: string;
+}) {
+  const active = count > 0;
+  const color = active ? tone : colors.textFaint;
+
+  return (
+    <Pressable
+      style={[styles.actionCard, active && { borderColor: color }]}
+      onPress={() => router.push(href as never)}
+    >
+      <Ionicons name={icon} size={26} color={color} />
+      <Text style={[styles.actionCount, { color }]}>{count}</Text>
+      <Text style={styles.actionLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function Metric({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <View style={styles.metric}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={[styles.metricValue, color ? { color } : null]}>{value}</Text>
+    </View>
+  );
 }
 
 export default function DashboardScreen() {
-  const [rows, setRows] = useState<BalanceRow[]>([]);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,20 +62,17 @@ export default function DashboardScreen() {
 
       async function load() {
         setLoading(true);
+        setError(null);
         try {
-          const employees = await fetchEmployees();
-          const active = employees.filter((e) => e.active && e.role !== "admin");
-          const withBalances = await Promise.all(
-            active.map(async (e) => ({
-              id: e.id,
-              fullName: e.full_name,
-              balanceMinutes: await fetchHourBankBalance(e.id).catch(() => 0),
-            }))
-          );
-          withBalances.sort((a, b) => a.balanceMinutes - b.balanceMinutes);
-          if (!cancelled) setRows(withBalances);
+          const result = await fetchDashboardData();
+          if (!cancelled) setData(result);
         } catch (err) {
-          if (!cancelled) setError(err instanceof Error ? err.message : "Erro ao carregar o dashboard");
+          // Zera o painel em vez de manter números velhos na tela: um indicador
+          // desatualizado sem aviso é pior que um painel vazio com erro.
+          if (!cancelled) {
+            setData(null);
+            setError(err instanceof Error ? err.message : "Erro ao carregar o painel");
+          }
         } finally {
           if (!cancelled) setLoading(false);
         }
@@ -52,83 +85,195 @@ export default function DashboardScreen() {
     }, [])
   );
 
-  const totalMinutes = rows.reduce((sum, r) => sum + r.balanceMinutes, 0);
-  const positiveCount = rows.filter((r) => r.balanceMinutes >= 0).length;
-  const negativeCount = rows.length - positiveCount;
+  if (loading && !data) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.hint}>Carregando o painel…</Text>
+      </View>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <View style={styles.center}>
+        <Ionicons name="alert-circle-outline" size={40} color={colors.danger} />
+        <Text style={styles.error}>{error ?? "Não foi possível carregar o painel."}</Text>
+      </View>
+    );
+  }
+
+  const { metrics } = data;
+  const closingPending = data.unclosedEmployees.length;
 
   return (
-    <FlatList
-      style={styles.container}
-      data={rows}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.list}
-      ListHeaderComponent={
-        <>
-          <View style={styles.statsRow}>
-            <Card style={styles.statCard}>
-              <Text style={styles.statLabel}>Total no banco</Text>
-              <Text style={[styles.statValue, { color: totalMinutes >= 0 ? colors.success : colors.danger }]}>
-                {formatMinutes(totalMinutes)}
-              </Text>
-            </Card>
-            <Card style={styles.statCard}>
-              <Text style={styles.statLabel}>Funcionários em dia</Text>
-              <Text style={[styles.statValue, { color: colors.success }]}>{positiveCount}</Text>
-            </Card>
-            <Card style={styles.statCard}>
-              {/* "Devendo horas: 1" se lia como uma hora devida; o número é de pessoas. */}
-              <Text style={styles.statLabel}>Funcionários devendo</Text>
-              <Text style={[styles.statValue, { color: colors.danger }]}>{negativeCount}</Text>
-            </Card>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.block}>
+        <Text style={styles.sectionTitle}>Precisa da sua atenção</Text>
+        <View style={styles.actionRow}>
+          <ActionCard
+            icon="time-outline"
+            label="Pontos a aprovar"
+            count={data.pendingApprovals}
+            href="/(admin)/approvals"
+            tone={colors.warning}
+          />
+          <ActionCard
+            icon="alert-circle-outline"
+            label="Dias incompletos"
+            count={metrics.incompleteDays}
+            href="/(admin)/overview"
+            tone={colors.warning}
+          />
+          <ActionCard
+            icon="close-circle-outline"
+            label={`Faltas em ${data.monthLabel.split("/")[0].toLowerCase()}`}
+            count={metrics.absentDays}
+            href="/(admin)/overview"
+            tone={colors.danger}
+          />
+          <ActionCard
+            icon="lock-closed-outline"
+            label={`${data.previousMonthLabel} a fechar`}
+            count={closingPending}
+            href="/(admin)/closing"
+            tone={colors.accent}
+          />
+        </View>
+      </View>
+
+      <Card style={styles.card}>
+        <Text style={styles.cardTitle}>Banco de horas acumulado</Text>
+        <View style={styles.bigRow}>
+          <View style={styles.bigBox}>
+            <Text style={styles.bigLabel}>Débito</Text>
+            <Text style={[styles.bigValue, { color: colors.danger }]}>
+              {formatMinutes(data.totalDebitMinutes)}
+            </Text>
           </View>
+          <View style={styles.bigBox}>
+            <Text style={styles.bigLabel}>Horas extras</Text>
+            <Text style={[styles.bigValue, { color: colors.success }]}>
+              {formatMinutes(data.totalOvertimeMinutes)}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.hint}>
+          Os dois lados só se encontram no fechamento do mês.
+        </Text>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+        {data.employees.map((employee) => (
+          <Pressable
+            key={employee.id}
+            style={styles.employeeRow}
+            onPress={() => router.push(`/(admin)/employees/${employee.id}`)}
+          >
+            <Text style={styles.employeeName}>{employee.fullName}</Text>
+            <Text style={[styles.employeeValue, { color: colors.danger }]}>
+              {employee.debitMinutes === null ? "—" : formatMinutes(employee.debitMinutes)}
+            </Text>
+            <Text style={[styles.employeeValue, { color: colors.success }]}>
+              {employee.overtimeMinutes === null ? "—" : formatMinutes(employee.overtimeMinutes)}
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textFaint} />
+          </Pressable>
+        ))}
+        {data.employees.length === 0 ? (
+          <Text style={styles.hint}>Nenhum funcionário ativo</Text>
+        ) : null}
+      </Card>
 
-          <Card style={styles.chartCard}>
-            <Text style={styles.chartTitle}>Saldo por funcionário</Text>
-            <BalanceBarChart points={rows.map((r) => ({ label: r.fullName, value: r.balanceMinutes }))} />
-          </Card>
+      <Card style={styles.card}>
+        <Text style={styles.cardTitle}>{data.monthLabel}</Text>
+        <View style={styles.metricsGrid}>
+          <Metric label="Dias trabalhados" value={String(metrics.workedDays)} color={colors.success} />
+          <Metric label="Faltas" value={String(metrics.absentDays)} color={colors.danger} />
+          <Metric label="Atestado/folga" value={String(metrics.justifiedDays)} color={colors.accent} />
+          <Metric label="Aguardando" value={String(metrics.pendingDays)} color={colors.warning} />
+          <Metric label="Horas trabalhadas" value={formatMinutes(metrics.workedMinutes)} />
+          <Metric label="Jornada prevista" value={formatMinutes(metrics.expectedMinutes)} />
+          <Metric
+            label="Assiduidade"
+            value={formatPercent(metrics.attendanceRate)}
+            color={
+              metrics.attendanceRate === null
+                ? undefined
+                : metrics.attendanceRate >= 1
+                  ? colors.success
+                  : colors.warning
+            }
+          />
+        </View>
+        <Text style={styles.hint}>
+          Assiduidade: dias presentes sobre os dias cobrados. Atestado e folga ficam de fora da
+          conta, porque não são cobrados.
+        </Text>
+      </Card>
 
-          <Text style={styles.sectionTitle}>Funcionários</Text>
-        </>
-      }
-      renderItem={({ item }) => (
-        <Pressable style={styles.row} onPress={() => router.push(`/(admin)/employees/${item.id}`)}>
-          <Text style={styles.rowName}>{item.fullName}</Text>
-          <Text style={[styles.rowBalance, { color: item.balanceMinutes >= 0 ? colors.success : colors.danger }]}>
-            {formatMinutes(item.balanceMinutes)}
-          </Text>
-        </Pressable>
-      )}
-      ListEmptyComponent={!loading ? <Text style={styles.empty}>Nenhum funcionário ativo</Text> : null}
-    />
+      <Card style={styles.card}>
+        <Text style={styles.cardTitle}>Saldo por dia em {data.monthLabel}</Text>
+        <DailyBalanceChart points={data.dailySeries} />
+      </Card>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  list: { padding: 16 },
-  statsRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  statCard: { flex: 1, gap: 4, alignItems: "center" },
-  statLabel: { fontSize: 11, color: colors.textMuted, textAlign: "center" },
-  statValue: { fontSize: 20, fontWeight: "700" },
-  chartCard: { gap: 12, marginBottom: 16, alignItems: "center" },
-  chartTitle: { fontSize: 15, fontWeight: "700", color: colors.text, alignSelf: "flex-start" },
-  sectionTitle: { fontSize: 14, fontWeight: "600", color: colors.textMuted, marginBottom: 8 },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  content: { padding: 16, gap: 16 },
+  center: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
+  block: { gap: 10 },
+  sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
+  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  actionCard: {
+    flex: 1,
+    minWidth: 150,
+    gap: 4,
+    padding: 14,
+    borderRadius: 12,
     backgroundColor: colors.surface,
-    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 8,
+    alignItems: "center",
   },
-  rowName: { fontSize: 15, fontWeight: "600", color: colors.text },
-  rowBalance: { fontSize: 15, fontWeight: "700" },
-  error: { color: colors.danger, marginBottom: 16 },
-  empty: { textAlign: "center", color: colors.textMuted, marginTop: 32 },
+  actionCount: { fontSize: 30, fontWeight: "700", fontVariant: ["tabular-nums"] },
+  actionLabel: { fontSize: 14, color: colors.textMuted, textAlign: "center" },
+  card: { gap: 12 },
+  cardTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
+  bigRow: { flexDirection: "row", gap: 12 },
+  bigBox: {
+    flex: 1,
+    gap: 2,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  bigLabel: { fontSize: 14, color: colors.textMuted },
+  bigValue: { fontSize: 30, fontWeight: "700", fontVariant: ["tabular-nums"] },
+  employeeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  employeeName: { flex: 1, fontSize: 16, fontWeight: "600", color: colors.text },
+  employeeValue: { fontSize: 16, fontWeight: "700", fontVariant: ["tabular-nums"], minWidth: 70, textAlign: "right" },
+  metricsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  metric: {
+    minWidth: 130,
+    flexGrow: 1,
+    gap: 2,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  metricLabel: { fontSize: 13, color: colors.textMuted },
+  metricValue: { fontSize: 22, fontWeight: "700", color: colors.text, fontVariant: ["tabular-nums"] },
+  hint: { fontSize: 14, color: colors.textFaint },
+  error: { fontSize: 16, color: colors.danger, textAlign: "center" },
 });
