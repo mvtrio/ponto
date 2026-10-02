@@ -3,7 +3,11 @@ import { useCallback, useState } from "react";
 import { useFocusEffect, router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { CumulativeBalanceChart } from "../../components/charts/CumulativeBalanceChart";
 import { DailyBalanceChart } from "../../components/charts/DailyBalanceChart";
+import { DonutChart } from "../../components/charts/DonutChart";
+import { MonthlyTotalsChart } from "../../components/charts/MonthlyTotalsChart";
+import { ProgressBar } from "../../components/charts/ProgressBar";
 import { Card } from "../../components/ui/Card";
 import { fetchDashboardData, type DashboardData } from "../../features/admin/dashboardService";
 import { colors } from "../../lib/theme";
@@ -11,6 +15,20 @@ import { formatMinutes } from "../../types/domain";
 
 function formatPercent(rate: number | null): string {
   return rate === null ? "—" : `${Math.round(rate * 100)}%`;
+}
+
+const SLICE_COLOR: Record<string, string> = {
+  worked: colors.success,
+  absent: colors.danger,
+  justified: colors.accent,
+  incomplete: colors.warning,
+  pending: "#9b8cff",
+};
+
+const MONTH_SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+function shortMonth(month: string): string {
+  return MONTH_SHORT[Number(month.slice(5, 7)) - 1] ?? month;
 }
 
 /** Cartão de pendência: só aparece em destaque quando há algo a fazer. */
@@ -210,8 +228,43 @@ export default function DashboardScreen() {
       </Card>
 
       <Card style={styles.card}>
+        <Text style={styles.cardTitle}>Jornada cumprida em {data.monthLabel}</Text>
+        <ProgressBar
+          workedMinutes={metrics.workedMinutes}
+          expectedMinutes={metrics.expectedMinutes}
+        />
+      </Card>
+
+      <Card style={styles.card}>
+        <Text style={styles.cardTitle}>Composição dos dias em {data.monthLabel}</Text>
+        <DonutChart
+          centerLabel="dias"
+          slices={data.composition.map((slice) => ({
+            ...slice,
+            color: SLICE_COLOR[slice.key] ?? colors.textMuted,
+          }))}
+        />
+      </Card>
+
+      <Card style={styles.card}>
+        <Text style={styles.cardTitle}>Trajetória do saldo em {data.monthLabel}</Text>
+        <CumulativeBalanceChart points={data.cumulativeSeries} />
+      </Card>
+
+      <Card style={styles.card}>
         <Text style={styles.cardTitle}>Saldo por dia em {data.monthLabel}</Text>
         <DailyBalanceChart points={data.dailySeries} />
+      </Card>
+
+      <Card style={styles.card}>
+        <Text style={styles.cardTitle}>Extras e débito por mês</Text>
+        <MonthlyTotalsChart
+          months={data.monthlyTotals.map((m) => ({
+            label: shortMonth(m.month),
+            overtimeMinutes: m.overtimeMinutes,
+            deficitMinutes: m.deficitMinutes,
+          }))}
+        />
       </Card>
     </ScrollView>
   );

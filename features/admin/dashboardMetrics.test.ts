@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { buildDailyBalanceSeries, buildPeriodMetrics, monthStart } from "./dashboardMetrics.ts";
+import {
+  buildCumulativeSeries,
+  buildDailyBalanceSeries,
+  buildDayComposition,
+  buildMonthlyTotals,
+  buildPeriodMetrics,
+  monthStart,
+  monthsBefore,
+} from "./dashboardMetrics.ts";
 import type { OverviewRow, OverviewStatus } from "./punchOverviewRules.ts";
 import type { DailySummary } from "../../types/domain.ts";
 
@@ -110,4 +118,62 @@ test("série diária sai em ordem cronológica, com o dia do mês no rótulo", (
 test("primeiro dia do mês", () => {
   assert.equal(monthStart("2026-10-02"), "2026-10-01");
   assert.equal(monthStart("2026-01-31"), "2026-01-01");
+});
+
+test("meses atrás atravessa a virada do ano", () => {
+  assert.equal(monthsBefore("2026-10-02", 0), "2026-10-01");
+  assert.equal(monthsBefore("2026-10-02", 5), "2026-05-01");
+  assert.equal(monthsBefore("2026-02-15", 5), "2025-09-01");
+  assert.equal(monthsBefore("2026-01-10", 1), "2025-12-01");
+});
+
+test("saldo acumulado soma dia a dia, não repete o saldo do dia", () => {
+  const pontos = buildCumulativeSeries([
+    summary("2026-09-01", 540), // +60
+    summary("2026-09-02", 420), // -60
+    summary("2026-09-03", 600), // +120
+  ]);
+  assert.deepEqual(
+    pontos.map((p) => p.value),
+    [60, 0, 120]
+  );
+});
+
+test("acumulado respeita a ordem cronológica mesmo recebendo embaralhado", () => {
+  const pontos = buildCumulativeSeries([summary("2026-09-03", 600), summary("2026-09-01", 540)]);
+  assert.deepEqual(
+    pontos.map((p) => p.label),
+    ["01", "03"]
+  );
+  assert.deepEqual(
+    pontos.map((p) => p.value),
+    [60, 180]
+  );
+});
+
+test("totais por mês separam extras de débito", () => {
+  const totais = buildMonthlyTotals([
+    summary("2026-09-01", 540), // +60
+    summary("2026-09-02", 420), // -60
+    summary("2026-10-01", 600), // +120
+  ]);
+  assert.deepEqual(totais, [
+    { month: "2026-09", overtimeMinutes: 60, deficitMinutes: 60 },
+    { month: "2026-10", overtimeMinutes: 120, deficitMinutes: 0 },
+  ]);
+});
+
+test("composição descarta as fatias zeradas", () => {
+  const metrics = buildPeriodMetrics(
+    [row("2026-09-01", "ok"), row("2026-09-02", "ok"), row("2026-09-03", "atestado")],
+    []
+  );
+  const fatias = buildDayComposition(metrics);
+  assert.deepEqual(
+    fatias.map((f) => [f.key, f.value]),
+    [
+      ["worked", 2],
+      ["justified", 1],
+    ]
+  );
 });

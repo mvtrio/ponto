@@ -93,7 +93,75 @@ export function buildDailyBalanceSeries(summaries: DailySummary[]): DailyPoint[]
     .map((s) => ({ label: s.day.slice(8, 10), value: s.balance_minutes }));
 }
 
+/**
+ * Saldo acumulado dia a dia: onde o mês está indo, e não só como foi cada dia isolado.
+ * É a diferença entre "ontem fiz 20 minutos a menos" e "o mês inteiro está devendo 3h".
+ */
+export function buildCumulativeSeries(summaries: DailySummary[]): DailyPoint[] {
+  let running = 0;
+  return [...summaries]
+    .sort((a, b) => a.day.localeCompare(b.day))
+    .map((s) => {
+      running += s.balance_minutes;
+      return { label: s.day.slice(8, 10), value: running };
+    });
+}
+
+export interface MonthTotals {
+  /** AAAA-MM. */
+  month: string;
+  overtimeMinutes: number;
+  /** Positivo. */
+  deficitMinutes: number;
+}
+
+/** Extras e débito somados por mês, do mais antigo ao mais recente. */
+export function buildMonthlyTotals(summaries: DailySummary[]): MonthTotals[] {
+  const byMonth = new Map<string, MonthTotals>();
+
+  for (const s of summaries) {
+    const month = s.day.slice(0, 7);
+    const entry = byMonth.get(month) ?? { month, overtimeMinutes: 0, deficitMinutes: 0 };
+    if (s.balance_minutes > 0) entry.overtimeMinutes += s.balance_minutes;
+    else entry.deficitMinutes += -s.balance_minutes;
+    byMonth.set(month, entry);
+  }
+
+  return Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month));
+}
+
+export interface CompositionSlice {
+  key: string;
+  label: string;
+  value: number;
+}
+
+/**
+ * Composição dos dias do mês para o gráfico de rosca.
+ *
+ * Fatias zeradas ficam de fora: desenhar "0 faltas" não acrescenta nada e só suja a
+ * legenda de um mês limpo.
+ */
+export function buildDayComposition(metrics: PeriodMetrics): CompositionSlice[] {
+  return [
+    { key: "worked", label: "Trabalhados", value: metrics.workedDays },
+    { key: "absent", label: "Faltas", value: metrics.absentDays },
+    { key: "justified", label: "Atestado/folga", value: metrics.justifiedDays },
+    { key: "incomplete", label: "Incompletos", value: metrics.incompleteDays },
+    { key: "pending", label: "Aguardando", value: metrics.pendingDays },
+  ].filter((slice) => slice.value > 0);
+}
+
 /** Primeiro dia do mês de `day`, em AAAA-MM-DD. */
 export function monthStart(day: string): string {
   return `${day.slice(0, 7)}-01`;
+}
+
+/** Primeiro dia do mês `count` meses antes do mês de `day`, em AAAA-MM-DD. */
+export function monthsBefore(day: string, count: number): string {
+  const year = Number(day.slice(0, 4));
+  const month = Number(day.slice(5, 7));
+  // Date.UTC normaliza mês negativo virando o ano sozinho.
+  const d = new Date(Date.UTC(year, month - 1 - count, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
 }

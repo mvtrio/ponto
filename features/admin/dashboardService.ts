@@ -6,12 +6,21 @@ import { appToday } from "../../lib/appDate";
 import { fetchEmployees } from "./adminService";
 import { fetchPunchOverview } from "./punchOverviewService";
 import {
+  buildCumulativeSeries,
   buildDailyBalanceSeries,
+  buildDayComposition,
+  buildMonthlyTotals,
   buildPeriodMetrics,
   monthStart,
+  monthsBefore,
+  type CompositionSlice,
   type DailyPoint,
+  type MonthTotals,
   type PeriodMetrics,
 } from "./dashboardMetrics";
+
+/** Quantos meses o comparativo olha para trás, incluindo o corrente. */
+const TREND_MONTHS = 6;
 
 export interface EmployeeBank {
   id: string;
@@ -25,6 +34,9 @@ export interface DashboardData {
   monthLabel: string;
   metrics: PeriodMetrics;
   dailySeries: DailyPoint[];
+  cumulativeSeries: DailyPoint[];
+  composition: CompositionSlice[];
+  monthlyTotals: MonthTotals[];
   employees: EmployeeBank[];
   totalDebitMinutes: number;
   totalOvertimeMinutes: number;
@@ -47,9 +59,12 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   const from = monthStart(today);
   const previousMonth = previousMonthStart(today);
 
-  const [overview, summaries, employees, closings, pendingApprovals] = await Promise.all([
+  const [overview, summaries, trendSummaries, employees, closings, pendingApprovals] = await Promise.all([
     fetchPunchOverview(from, today),
     fetchDailySummariesForAll(from, today),
+    // Janela maior só para o comparativo entre meses. Vale a consulta extra: o painel
+    // sem histórico só mostra o mês corrente, e um número sozinho não indica tendência.
+    fetchDailySummariesForAll(monthsBefore(today, TREND_MONTHS - 1), today).catch(() => []),
     fetchEmployees(),
     fetchClosings().catch(() => []),
     // Contagem global, e não a do mês corrente: uma marcação de setembro ainda pendente
@@ -82,10 +97,15 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     closings.filter((c) => c.month === previousMonth).map((c) => c.employee_id)
   );
 
+  const metrics = buildPeriodMetrics(overview.rows, summaries);
+
   return {
     monthLabel: monthLabel(from),
-    metrics: buildPeriodMetrics(overview.rows, summaries),
+    metrics,
     dailySeries: buildDailyBalanceSeries(summaries),
+    cumulativeSeries: buildCumulativeSeries(summaries),
+    composition: buildDayComposition(metrics),
+    monthlyTotals: buildMonthlyTotals(trendSummaries),
     employees: banks.sort((a, b) => (b.debitMinutes ?? 0) - (a.debitMinutes ?? 0)),
     totalDebitMinutes: banks.reduce((sum, b) => sum + (b.debitMinutes ?? 0), 0),
     totalOvertimeMinutes: banks.reduce((sum, b) => sum + (b.overtimeMinutes ?? 0), 0),
