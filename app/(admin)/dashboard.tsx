@@ -159,7 +159,12 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      <Card style={styles.card}>
+      {/*
+        Grade de duas colunas que vira uma só quando não cabe: empilhado, o painel ficava
+        longo demais para ser lido de uma vez, que é o ponto de um painel.
+      */}
+      <View style={styles.grid}>
+      <Card style={[styles.card, styles.gridCard]}>
         <Text style={styles.cardTitle}>Banco de horas acumulado</Text>
         <View style={styles.bigRow}>
           <View style={styles.bigBox}>
@@ -200,7 +205,7 @@ export default function DashboardScreen() {
         ) : null}
       </Card>
 
-      <Card style={styles.card}>
+      <Card style={[styles.card, styles.gridCard]}>
         <Text style={styles.cardTitle}>{data.monthLabel}</Text>
         <View style={styles.metricsGrid}>
           <Metric label="Dias trabalhados" value={String(metrics.workedDays)} color={colors.success} />
@@ -227,7 +232,7 @@ export default function DashboardScreen() {
         </Text>
       </Card>
 
-      <Card style={styles.card}>
+      <Card style={[styles.card, styles.gridCard]}>
         <Text style={styles.cardTitle}>Jornada cumprida em {data.monthLabel}</Text>
         <ProgressBar
           workedMinutes={metrics.workedMinutes}
@@ -235,7 +240,7 @@ export default function DashboardScreen() {
         />
       </Card>
 
-      <Card style={styles.card}>
+      <Card style={[styles.card, styles.gridCard]}>
         <Text style={styles.cardTitle}>Composição dos dias em {data.monthLabel}</Text>
         <DonutChart
           centerLabel="dias"
@@ -246,17 +251,17 @@ export default function DashboardScreen() {
         />
       </Card>
 
-      <Card style={styles.card}>
+      <Card style={[styles.card, styles.gridCard]}>
         <Text style={styles.cardTitle}>Trajetória do saldo em {data.monthLabel}</Text>
         <CumulativeBalanceChart points={data.cumulativeSeries} />
       </Card>
 
-      <Card style={styles.card}>
+      <Card style={[styles.card, styles.gridCard]}>
         <Text style={styles.cardTitle}>Saldo por dia em {data.monthLabel}</Text>
         <DailyBalanceChart points={data.dailySeries} />
       </Card>
 
-      <Card style={styles.card}>
+      <Card style={[styles.card, styles.gridCard]}>
         <Text style={styles.cardTitle}>Extras e débito por mês</Text>
         <MonthlyTotalsChart
           months={data.monthlyTotals.map((m) => ({
@@ -266,6 +271,7 @@ export default function DashboardScreen() {
           }))}
         />
       </Card>
+      </View>
     </ScrollView>
   );
 }
@@ -277,6 +283,10 @@ const styles = StyleSheet.create({
   block: { gap: 10 },
   sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
   actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
+  // flexBasis em % com minWidth: duas colunas quando a tela comporta, uma só quando o
+  // cartão ficaria estreito demais para o gráfico que carrega dentro.
+  gridCard: { flexGrow: 1, flexBasis: "47%", minWidth: 380 },
   actionCard: {
     flex: 1,
     minWidth: 150,
