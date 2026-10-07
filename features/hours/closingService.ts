@@ -61,6 +61,24 @@ export async function fetchClosings(): Promise<ClosingWithName[]> {
   }));
 }
 
+/**
+ * Fechamentos de um funcionário, do mais recente para o mais antigo.
+ *
+ * Sem passar por `fetchEmployees`, diferente de `fetchClosings`: a funcionária consulta os
+ * próprios fechamentos e não tem motivo para pedir a lista de pessoas só para montar um
+ * nome que ela já sabe qual é.
+ */
+export async function fetchClosingsForEmployee(employeeId: string): Promise<MonthClosing[]> {
+  const { data, error } = await supabase
+    .from("month_closings")
+    .select("*")
+    .eq("employee_id", employeeId)
+    .order("month", { ascending: false });
+
+  if (error) throw asError(error, "Erro ao carregar os fechamentos.");
+  return (data ?? []) as unknown as MonthClosing[];
+}
+
 export async function closeMonth(employeeId: string, month: string): Promise<void> {
   const { error } = await supabase.rpc("close_month", {
     p_employee_id: employeeId,

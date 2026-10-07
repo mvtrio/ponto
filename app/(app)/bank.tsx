@@ -4,12 +4,14 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { MiniBarChart } from "../../components/charts/MiniBarChart";
 import { MiniLineChart } from "../../components/charts/MiniLineChart";
+import { ClosingStatement } from "../../components/history/ClosingStatement";
 import { DetailedPunchesTable } from "../../components/history/DetailedPunchesTable";
 import { IndicatorCard } from "../../components/history/IndicatorCard";
 import { PeriodFilter } from "../../components/history/PeriodFilter";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import type { Granularity } from "../../features/hours/indicatorsService";
 import { useBalanceSeries, useOvertimeSeries, usePeriodTotals } from "../../features/hours/useIndicators";
+import { useClosings } from "../../features/hours/useClosings";
 import { useDetailedDayRows } from "../../features/hours/useDetailedDayRows";
 import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
@@ -44,6 +46,7 @@ export default function BankScreen() {
     toDate
   );
   const { rows: detailedRows, loading: loadingDetailed } = useDetailedDayRows(profile?.id, fromDate, toDate);
+  const { closings, loading: loadingClosings, error: closingsError } = useClosings(profile?.id);
 
   const currentBalance = balancePoints.length ? balancePoints[balancePoints.length - 1].value : 0;
   const balanceColor = currentBalance >= 0 ? colors.success : colors.danger;
@@ -101,6 +104,26 @@ export default function BankScreen() {
       ) : (
         <DetailedPunchesTable rows={detailedRows} loading={loadingDetailed} />
       )}
+
+      <View style={styles.closings}>
+        <Text style={styles.closingsTitle}>Extrato dos meses fechados</Text>
+        <Text style={styles.closingsHint}>
+          No fim de cada mês suas horas extras abatem o débito acumulado. Aqui você vê essa conta
+          feita, mês a mês.
+        </Text>
+
+        {loadingClosings ? <Text style={styles.closingsHint}>Carregando…</Text> : null}
+        {closingsError ? <Text style={styles.closingsError}>{closingsError}</Text> : null}
+        {!loadingClosings && !closingsError && closings.length === 0 ? (
+          <Text style={styles.closingsHint}>
+            Nenhum mês foi fechado ainda. O extrato aparece aqui depois do primeiro fechamento.
+          </Text>
+        ) : null}
+
+        {closings.map((closing) => (
+          <ClosingStatement key={closing.id} closing={closing} />
+        ))}
+      </View>
     </ScrollView>
   );
 }
@@ -127,4 +150,8 @@ const styles = StyleSheet.create({
   overtimeHint: { fontSize: 12, color: colors.textFaint },
   deficitRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   deficitValue: { fontSize: 16, fontWeight: "700", color: colors.danger },
+  closings: { gap: 12, marginTop: 8 },
+  closingsTitle: { fontSize: 20, fontWeight: "700", color: colors.text },
+  closingsHint: { fontSize: 15, color: colors.textFaint, lineHeight: 22 },
+  closingsError: { fontSize: 15, color: colors.danger },
 });
