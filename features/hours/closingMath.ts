@@ -74,6 +74,13 @@ export function isValidMonth(month: string): boolean {
   return /^\d{4}-\d{2}$/.test(month) && Number(month.slice(5)) >= 1 && Number(month.slice(5)) <= 12;
 }
 
+/** Primeiro dia do mês seguinte ao informado. Aceita "AAAA-MM" ou "AAAA-MM-DD". */
+export function nextMonthOf(month: string): string {
+  const [year, m] = month.split("-").map(Number);
+  const next = new Date(Date.UTC(year, m, 1));
+  return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
+
 /** Primeiro dia do mês anterior ao de `day`, em AAAA-MM-DD. Mês a fechar por padrão. */
 export function previousMonthStart(day: string): string {
   const [year, month] = day.split("-").map(Number);

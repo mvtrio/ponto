@@ -6,8 +6,15 @@ import {
   isValidMonth,
   monthEnd,
   monthLabel,
+  nextMonthOf,
   previousMonthStart,
 } from "./closingMath.ts";
+
+test("mês seguinte atravessa a virada do ano", () => {
+  assert.equal(nextMonthOf("2026-09"), "2026-10-01");
+  assert.equal(nextMonthOf("2026-12"), "2027-01-01");
+  assert.equal(nextMonthOf("2026-09-30"), "2026-10-01");
+});
 
 test("último dia do mês, inclusive fevereiro bissexto", () => {
   assert.equal(monthEnd("2026-08"), "2026-08-31");

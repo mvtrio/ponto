@@ -11,6 +11,7 @@ import {
   isValidMonth,
   monthEnd,
   monthLabel,
+  nextMonthOf,
   previousMonthStart,
   type HourBankState,
 } from "../../features/hours/closingMath";
@@ -98,6 +99,12 @@ export default function ClosingScreen() {
   }, [employeeId, validMonth, refreshState, list]);
 
   const preview = closingState ? applyOvertimeToDebit(closingState) : null;
+
+  const differsFromToday =
+    state !== null &&
+    closingState !== null &&
+    (state.debitMinutes !== closingState.debitMinutes ||
+      state.overtimeMinutes !== closingState.overtimeMinutes);
 
   async function handleClose() {
     setError(null);
@@ -194,23 +201,34 @@ export default function ClosingScreen() {
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.sectionTitle}>Situação atual</Text>
+        <Text style={styles.sectionTitle}>
+          {validMonth ? `Fechamento de ${monthLabel(`${validMonth}-01`)}` : "Situação atual"}
+        </Text>
         {stateError ? <Text style={styles.error}>{stateError}</Text> : null}
         {!employeeId ? <Text style={styles.hint}>Selecione o funcionário acima.</Text> : null}
-        {employeeId && !state && !stateError ? <Text style={styles.hint}>Apurando…</Text> : null}
+        {employeeId && !closingState && !stateError ? <Text style={styles.hint}>Apurando…</Text> : null}
 
-        {state ? (
+        {/*
+          Em destaque vai o saldo da DATA DO FECHAMENTO, não o de hoje: é ele que entra na
+          conta. Antes era o contrário, e quem conferia subtraía o número grande da tela
+          chegando a um resultado diferente do que o sistema ia gravar.
+        */}
+        {validMonth && closingState ? (
           <View style={styles.stateRow}>
             <View style={styles.stateBox}>
-              <Text style={styles.stateLabel}>Débito acumulado hoje</Text>
+              <Text style={styles.stateLabel}>
+                Débito até {monthEnd(validMonth).split("-").reverse().join("/")}
+              </Text>
               <Text style={[styles.stateValue, { color: colors.danger }]}>
-                {formatMinutes(state.debitMinutes)}
+                {formatMinutes(closingState.debitMinutes)}
               </Text>
             </View>
             <View style={styles.stateBox}>
-              <Text style={styles.stateLabel}>Horas extras hoje</Text>
+              <Text style={styles.stateLabel}>
+                Horas extras até {monthEnd(validMonth).split("-").reverse().join("/")}
+              </Text>
               <Text style={[styles.stateValue, { color: colors.success }]}>
-                {formatMinutes(state.overtimeMinutes)}
+                {formatMinutes(closingState.overtimeMinutes)}
               </Text>
             </View>
           </View>
@@ -218,14 +236,7 @@ export default function ClosingScreen() {
 
         {validMonth && closingState && preview ? (
           <View style={styles.previewBox}>
-            <Text style={styles.previewTitle}>Se fechar {monthLabel(`${validMonth}-01`)}</Text>
-            {/* A base é o saldo no último dia do mês, e não o de hoje: dizer isso evita
-                que a diferença entre os dois números pareça erro. */}
-            <Text style={styles.previewBasis}>
-              Apurado até {monthEnd(validMonth).split("-").reverse().join("/")} — débito{" "}
-              {formatMinutes(closingState.debitMinutes)}, extras{" "}
-              {formatMinutes(closingState.overtimeMinutes)}.
-            </Text>
+            <Text style={styles.previewTitle}>Resultado do fechamento</Text>
             <View style={styles.previewLine}>
               <Text style={styles.previewLabel}>Extras usadas para abater</Text>
               <Text style={styles.previewValue}>{formatMinutes(preview.appliedMinutes)}</Text>
@@ -242,6 +253,23 @@ export default function ClosingScreen() {
                 {formatMinutes(preview.carryCreditMinutes)}
               </Text>
             </View>
+          </View>
+        ) : null}
+
+        {/*
+          Só aparece quando os dois momentos divergem. Fechado no dia 1º, não há diferença
+          e repetir os mesmos números só confundiria.
+        */}
+        {validMonth && closingState && state && differsFromToday ? (
+          <View style={styles.todayBox}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.textMuted} />
+            <Text style={styles.todayText}>
+              Hoje o débito já é{" "}
+              <Text style={styles.todayStrong}>{formatMinutes(state.debitMinutes)}</Text> e as extras{" "}
+              <Text style={styles.todayStrong}>{formatMinutes(state.overtimeMinutes)}</Text>. A
+              diferença são dias de {monthLabel(nextMonthOf(validMonth)).split("/")[0].toLowerCase()} em
+              diante, que entram no fechamento daquele mês — não neste.
+            </Text>
           </View>
         ) : null}
 
@@ -370,7 +398,18 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   previewTitle: { fontSize: 16, fontWeight: "700", color: colors.text },
-  previewBasis: { fontSize: 14, color: colors.textFaint },
+  todayBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  todayText: { flex: 1, fontSize: 14, color: colors.textMuted, lineHeight: 21 },
+  todayStrong: { fontWeight: "700", color: colors.text },
   previewLine: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
   previewLabel: { flex: 1, fontSize: 15, color: colors.textMuted },
   previewValue: { fontSize: 17, fontWeight: "700", color: colors.text, fontVariant: ["tabular-nums"] },
