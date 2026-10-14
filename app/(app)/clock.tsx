@@ -28,7 +28,12 @@ import { useSession } from "../../features/auth/useSession";
 import { colors } from "../../lib/theme";
 import { appDate, appToday, startOfAppDay } from "../../lib/appDate";
 import { weekdayName } from "../../components/ui/weekdayNames";
-import { formatMinutes, type ActivePunchType, type Punch } from "../../types/domain";
+import {
+  formatMinutes,
+  formatMinutesAsWorkDays,
+  type ActivePunchType,
+  type Punch,
+} from "../../types/domain";
 
 const CONFIRM_LABELS: Record<ActivePunchType, string> = {
   clock_in: "Entrada registrada! Aguardando aprovação do administrador.",
@@ -157,6 +162,13 @@ export default function ClockScreen() {
 
   const bankError = balanceError ?? history.error;
 
+  // Depende da jornada padrão, que vem das configurações: enquanto ela não chega, a
+  // conversão fica de fora em vez de ser calculada com um palpite.
+  const debitInWorkDays =
+    debitMinutes === null || !settings
+      ? null
+      : formatMinutesAsWorkDays(debitMinutes, settings.standard_daily_minutes);
+
   // Dias passados com entrada e sem saída. Saída pendente de aprovação já conta como
   // registrada — quem precisa agir nesse caso é o admin, não ela.
   const missingClockOut = daysMissingClockOut(history.punches, appToday());
@@ -277,6 +289,11 @@ export default function ClockScreen() {
             <Text style={[styles.totalValue, { color: colors.danger }]}>
               {loadingBalance ? "…" : debitMinutes === null ? "—" : formatMinutes(debitMinutes)}
             </Text>
+            {/* A dívida na unidade em que ela vai ser paga. Sem isso, "19h00" é um número
+                solto; com isso, é o expediente que falta. */}
+            {debitInWorkDays ? (
+              <Text style={styles.totalInDays}>{debitInWorkDays} de trabalho</Text>
+            ) : null}
           </View>
           <View style={styles.total}>
             <Text style={styles.totalLabel}>Horas extras</Text>
@@ -351,5 +368,6 @@ const styles = StyleSheet.create({
   total: { gap: 4 },
   totalLabel: { fontSize: 17, color: colors.textMuted },
   totalValue: { fontSize: 44, fontWeight: "700" },
+  totalInDays: { fontSize: 16, fontWeight: "600", color: colors.textMuted },
   bankHint: { fontSize: 15, color: colors.textFaint },
 });

@@ -103,3 +103,29 @@ export function formatMinutes(totalMinutes: number): string {
   const minutes = abs % 60;
   return `${sign}${hours}h${minutes.toString().padStart(2, "0")}`;
 }
+
+/**
+ * O mesmo total de minutos lido como dias de trabalho: "2 dias e 3h00".
+ *
+ * "19h00 de débito" não diz muita coisa — ninguém deve horas, deve expediente. Dividir
+ * pela jornada padrão (que já é líquida, sem o intervalo) devolve o número na unidade em
+ * que a dívida vai ser paga: dias de trabalho.
+ *
+ * Retorna `null` quando não há o que converter — nada a dever, ou jornada não carregada.
+ * Abaixo de um dia o texto não repete as horas que estão logo acima: diz que é menos de
+ * um dia e pronto.
+ */
+export function formatMinutesAsWorkDays(
+  totalMinutes: number,
+  standardDailyMinutes: number
+): string | null {
+  if (totalMinutes <= 0 || standardDailyMinutes <= 0) return null;
+
+  const days = Math.floor(totalMinutes / standardDailyMinutes);
+  const rest = totalMinutes % standardDailyMinutes;
+
+  if (days === 0) return "menos de 1 dia";
+
+  const label = days === 1 ? "1 dia" : `${days} dias`;
+  return rest === 0 ? label : `${label} e ${formatMinutes(rest)}`;
+}

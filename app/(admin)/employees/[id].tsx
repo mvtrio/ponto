@@ -12,11 +12,12 @@ import {
   resetEmployeePassword,
   updateEmployee,
 } from "../../../features/admin/adminService";
+import { useCompanySettings } from "../../../features/company/useCompanySettings";
 import { useDailySummaries } from "../../../features/hours/useDailySummary";
 import { useHourBank } from "../../../features/hours/useHourBank";
 import { colors } from "../../../lib/theme";
 import type { Role } from "../../../types/domain";
-import { formatMinutes } from "../../../types/domain";
+import { formatMinutes, formatMinutesAsWorkDays } from "../../../types/domain";
 import { appDaysAgo } from "../../../lib/appDate";
 
 export default function EmployeeDetailScreen() {
@@ -25,6 +26,14 @@ export default function EmployeeDetailScreen() {
   const toDate = appDaysAgo(0);
   const { summaries, loading, error } = useDailySummaries(id, fromDate, toDate);
   const { debitMinutes, overtimeMinutes } = useHourBank(id);
+  const { settings } = useCompanySettings();
+
+  // O mesmo débito em dias de trabalho que a funcionária vê na tela dela, para que admin e
+  // funcionária estejam falando do mesmo número na hora da conversa.
+  const debitInWorkDays =
+    debitMinutes === null || !settings
+      ? null
+      : formatMinutesAsWorkDays(debitMinutes, settings.standard_daily_minutes);
 
   const [fullName, setFullName] = useState("");
   const [employeeCode, setEmployeeCode] = useState("");
@@ -135,6 +144,9 @@ export default function EmployeeDetailScreen() {
                   <Text style={[styles.balanceValue, { color: colors.danger }]}>
                     {debitMinutes !== null ? formatMinutes(debitMinutes) : "—"}
                   </Text>
+                  {debitInWorkDays ? (
+                    <Text style={styles.balanceInDays}>{debitInWorkDays} de trabalho</Text>
+                  ) : null}
                 </View>
                 <View>
                   <Text style={styles.balanceCaption}>Horas extras</Text>
@@ -272,6 +284,7 @@ const styles = StyleSheet.create({
   header: { padding: 16, backgroundColor: colors.surface, alignItems: "center", gap: 4, marginBottom: 16 },
   balanceLabel: { fontSize: 12, color: colors.textMuted },
   balanceValue: { fontSize: 24, fontWeight: "700" },
+  balanceInDays: { fontSize: 13, fontWeight: "600", color: colors.textMuted },
   balanceRow: { flexDirection: "row", gap: 24 },
   balanceCaption: { fontSize: 12, color: colors.textFaint },
   list: { padding: 16, paddingTop: 0 },
