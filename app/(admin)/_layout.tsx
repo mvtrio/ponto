@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import { View, type ColorValue } from "react-native";
 
+import { HeaderRefreshButton } from "../../components/admin/HeaderRefreshButton";
 import { PendingApprovalsBell } from "../../components/admin/PendingApprovalsBell";
 import { HeaderUserBar } from "../../components/ui/HeaderUserBar";
 import { LoadingScreen } from "../../components/ui/LoadingScreen";
@@ -32,10 +33,11 @@ export default function AdminLayout() {
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
-        // Sino de pendências, nome de quem está conectado e o botão de sair acompanham
-        // todas as telas do admin.
+        // Recarregar, sino de pendências, nome de quem está conectado e o botão de sair
+        // acompanham todas as telas do admin.
         headerRight: () => (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <HeaderRefreshButton />
             <PendingApprovalsBell />
             <HeaderUserBar />
           </View>
