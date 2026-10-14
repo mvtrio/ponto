@@ -10,8 +10,9 @@ import { MonthlyTotalsChart } from "../../components/charts/MonthlyTotalsChart";
 import { ProgressBar } from "../../components/charts/ProgressBar";
 import { Card } from "../../components/ui/Card";
 import { fetchDashboardData, type DashboardData } from "../../features/admin/dashboardService";
+import { useCompanySettings } from "../../features/company/useCompanySettings";
 import { colors } from "../../lib/theme";
-import { formatMinutes } from "../../types/domain";
+import { formatMinutes, formatMinutesAsWorkDays } from "../../types/domain";
 
 function formatPercent(rate: number | null): string {
   return rate === null ? "—" : `${Math.round(rate * 100)}%`;
@@ -73,6 +74,7 @@ export default function DashboardScreen() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { settings } = useCompanySettings();
 
   useFocusEffect(
     useCallback(() => {
@@ -123,6 +125,12 @@ export default function DashboardScreen() {
   const { metrics } = data;
   const closingPending = data.unclosedEmployees.length;
 
+  // O débito somado da equipe lido em expediente: quantos dias de trabalho a empresa tem
+  // a receber. Enquanto a jornada padrão não chega, fica de fora em vez de ser chutada.
+  const debitInWorkDays = settings
+    ? formatMinutesAsWorkDays(data.totalDebitMinutes, settings.standard_daily_minutes)
+    : null;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.block}>
@@ -172,6 +180,9 @@ export default function DashboardScreen() {
             <Text style={[styles.bigValue, { color: colors.danger }]}>
               {formatMinutes(data.totalDebitMinutes)}
             </Text>
+            {debitInWorkDays ? (
+              <Text style={styles.bigInDays}>{debitInWorkDays} de trabalho</Text>
+            ) : null}
           </View>
           <View style={styles.bigBox}>
             <Text style={styles.bigLabel}>Horas extras</Text>
@@ -314,6 +325,7 @@ const styles = StyleSheet.create({
   },
   bigLabel: { fontSize: 14, color: colors.textMuted },
   bigValue: { fontSize: 30, fontWeight: "700", fontVariant: ["tabular-nums"] },
+  bigInDays: { fontSize: 13, fontWeight: "600", color: colors.textMuted },
   employeeRow: {
     flexDirection: "row",
     alignItems: "center",
