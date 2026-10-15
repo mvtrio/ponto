@@ -1,4 +1,7 @@
 {
   "buildCommand": "npm run build:web",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [{ "source": "/employees/:id", "destination": "/employees/[id]" }]
 }
