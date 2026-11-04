@@ -31,7 +31,7 @@ const STATUS_META: Record<
   liberado: { label: "Liberado", color: colors.warning, icon: "exit" },
 };
 
-const COL = { status: 150, employee: 260, day: 150, time: 120, balance: 130 };
+const COL = { status: 150, employee: 260, day: 150, time: 120, balance: 130, notes: 360 };
 
 function Cell({ width, children, color, bold }: {
   width: number;
@@ -159,6 +159,7 @@ export default function OverviewScreen() {
               <Cell width={COL.time}>Entrada</Cell>
               <Cell width={COL.time}>Saída</Cell>
               <Cell width={COL.balance}>Saldo</Cell>
+              <Cell width={COL.notes}>Observação</Cell>
             </View>
 
             {rows.map((row) => {
@@ -194,6 +195,11 @@ export default function OverviewScreen() {
                   >
                     {row.balanceMinutes === null ? "—" : formatMinutes(row.balanceMinutes)}
                   </Cell>
+                  <View style={[styles.cell, { width: COL.notes }]}>
+                    <Text style={[styles.notesText, row.notes ? null : { color: colors.textFaint }]}>
+                      {row.notes ?? "—"}
+                    </Text>
+                  </View>
                 </View>
               );
             })}
@@ -256,6 +262,8 @@ const styles = StyleSheet.create({
   cell: { paddingHorizontal: 8, justifyContent: "center" },
   cellText: { fontSize: 18, color: colors.textMuted },
   bold: { fontWeight: "700" },
+  // Sem limite de linhas: a observação é texto livre e cortá-la esconderia o motivo.
+  notesText: { fontSize: 16, color: colors.text },
   error: { fontSize: 16, color: colors.danger },
   empty: { textAlign: "center", fontSize: 18, color: colors.textMuted, marginTop: 16 },
 });

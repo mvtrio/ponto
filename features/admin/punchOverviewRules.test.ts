@@ -68,6 +68,17 @@ test("dia liberado tem status próprio e carrega o desconto da jornada", () => {
   assert.equal(rows[0].balanceMinutes, -480);
 });
 
+test("observação da ausência acompanha a linha do dia", () => {
+  const rows = buildOverviewRows(
+    [],
+    [summary("e1", "2026-09-30", -480, "liberado"), summary("e1", "2026-09-18", -480)],
+    NAMES,
+    new Map([["e1|2026-09-30", "Saiu para o velório do tio"]])
+  );
+  assert.equal(rows.find((r) => r.day === "2026-09-30")?.notes, "Saiu para o velório do tio");
+  assert.equal(rows.find((r) => r.day === "2026-09-18")?.notes, null);
+});
+
 test("dia útil sem marcação e sem justificativa continua sendo falta", () => {
   const rows = buildOverviewRows([], [summary("e1", "2026-09-18", -480)], NAMES);
   assert.equal(rows[0].status, "absent");

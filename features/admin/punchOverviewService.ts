@@ -2,6 +2,7 @@ import { fetchDailySummariesForAll } from "../hours/hoursService";
 import { fetchPunchesForRangeAll } from "../punches/punchService";
 import { addDays, startOfAppDay } from "../../lib/appDate";
 import { fetchEmployees } from "./adminService";
+import { fetchAbsenceNotes } from "./absencesService";
 import { buildOverviewRows, type OverviewRow } from "./punchOverviewRules";
 
 export type { OverviewRow, OverviewStatus } from "./punchOverviewRules";
@@ -22,14 +23,15 @@ export interface PunchOverview {
  * do banco de horas individual, não deste acompanhamento.
  */
 export async function fetchPunchOverview(fromDate: string, toDate: string): Promise<PunchOverview> {
-  const [employees, punches, summaries] = await Promise.all([
+  const [employees, punches, summaries, notesByKey] = await Promise.all([
     fetchEmployees(),
     fetchPunchesForRangeAll(startOfAppDay(fromDate), startOfAppDay(addDays(toDate, 1))),
     fetchDailySummariesForAll(fromDate, toDate),
+    fetchAbsenceNotes(fromDate, toDate),
   ]);
 
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
-  const rows = buildOverviewRows(punches, summaries, nameById);
+  const rows = buildOverviewRows(punches, summaries, nameById, notesByKey);
 
   const present = new Map<string, string>();
   for (const row of rows) present.set(row.employeeId, row.employeeName);

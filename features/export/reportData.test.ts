@@ -20,6 +20,7 @@ function row(
     saida: status === "ok" ? "18:00" : null,
     balanceMinutes,
     status,
+    notes: null,
   };
 }
 

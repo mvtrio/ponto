@@ -63,6 +63,23 @@ export async function createAbsences(input: NewAbsenceInput): Promise<void> {
   if (error) throw asError(error, "Erro ao registrar o atestado/folga.");
 }
 
+/** Observações das ausências do período, por `funcionário|dia`, para o quadro de marcações. */
+export async function fetchAbsenceNotes(fromDate: string, toDate: string): Promise<Map<string, string>> {
+  const { data, error } = await supabase
+    .from("justified_absences")
+    .select("employee_id, day, notes")
+    .gte("day", fromDate)
+    .lte("day", toDate)
+    .not("notes", "is", null);
+  if (error) throw asError(error, "Erro ao carregar as observações das ausências.");
+
+  const notes = new Map<string, string>();
+  for (const row of (data ?? []) as { employee_id: string; day: string; notes: string }[]) {
+    if (row.notes.trim()) notes.set(`${row.employee_id}|${row.day}`, row.notes.trim());
+  }
+  return notes;
+}
+
 export async function deleteAbsence(id: string): Promise<void> {
   const { error } = await supabase.from("justified_absences").delete().eq("id", id);
   if (error) throw asError(error, "Erro ao remover o registro.");

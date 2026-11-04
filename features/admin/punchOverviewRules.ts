@@ -20,6 +20,8 @@ export interface OverviewRow {
   saida: string | null;
   balanceMinutes: number | null;
   status: OverviewStatus;
+  /** Observação do registro de atestado/folga/liberado do dia, quando houver. */
+  notes: string | null;
 }
 
 /**
@@ -29,7 +31,9 @@ export interface OverviewRow {
 export function buildOverviewRows(
   punches: Punch[],
   summaries: DailySummary[],
-  nameById: Map<string, string>
+  nameById: Map<string, string>,
+  /** Observações das ausências registradas, por `funcionário|dia`. */
+  notesByKey: Map<string, string> = new Map()
 ): OverviewRow[] {
   const balanceByKey = new Map(summaries.map((s) => [`${s.employee_id}|${s.day}`, s.balance_minutes]));
   const absenceByKey = new Map<string, AbsenceKind>();
@@ -91,6 +95,7 @@ export function buildOverviewRows(
       // Pendente não gera saldo: mostrar um número seria afirmar algo que ainda não vale.
       balanceMinutes: hasPending ? null : balanceByKey.get(key) ?? null,
       status,
+      notes: notesByKey.get(key) ?? null,
     });
   }
 

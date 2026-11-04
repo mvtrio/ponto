@@ -23,6 +23,7 @@ function row(day: string, status: OverviewStatus): OverviewRow {
     saida: null,
     balanceMinutes: null,
     status,
+    notes: null,
   };
 }
 
