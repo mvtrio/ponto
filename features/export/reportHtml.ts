@@ -13,6 +13,7 @@ const STATUS_LABEL: Record<OverviewStatus, string> = {
   absent: "Falta",
   atestado: "Atestado",
   folga: "Folga",
+  liberado: "Liberado",
 };
 
 function escapeHtml(value: string): string {
@@ -61,6 +62,7 @@ export function buildReportHtml(
           <td class="num">${r.daysWorked}</td>
           <td class="num ${r.daysAbsent > 0 ? "neg" : ""}">${r.daysAbsent}</td>
           <td class="num">${r.daysJustified}</td>
+          <td class="num">${r.daysReleased}</td>
           <td class="num">${r.daysIncomplete}</td>
           <td class="num">${r.daysPending}</td>
           <td class="num pos">${formatMinutes(r.overtimeMinutes)}</td>
@@ -94,6 +96,7 @@ export function buildReportHtml(
             ${r.daysWorked} ${r.daysWorked === 1 ? "dia completo" : "dias completos"} ·
             ${r.daysAbsent} falta(s) ·
             ${r.daysJustified} atestado/folga ·
+            ${r.daysReleased} liberado(s) ·
             ${r.daysIncomplete} incompleto(s) ·
             ${r.daysPending} aguardando aprovação ·
             saldo do período <strong class="${r.balanceMinutes >= 0 ? "pos" : "neg"}">${signed(
@@ -146,6 +149,7 @@ export function buildReportHtml(
       tr.incomplete td { background: #fffbf0; }
       /* Azul e não vermelho: o dia está justificado, não é uma pendência contra ela. */
       tr.atestado td, tr.folga td { background: #eaf2fd; color: #14407a; }
+      tr.liberado td { background: #fff3e0; color: #7a4a00; }
       .empty { text-align: center; color: #777; font-style: italic; }
       footer { margin-top: 24px; font-size: 11px; color: #777; border-top: 1px solid #ddd; padding-top: 8px; }
     </style>
@@ -165,6 +169,7 @@ export function buildReportHtml(
             <th class="num">Dias completos</th>
             <th class="num">Faltas</th>
             <th class="num">Atestado/folga</th>
+            <th class="num">Liberado</th>
             <th class="num">Incompletos</th>
             <th class="num">Aguardando</th>
             <th class="num">Horas extras</th>
@@ -172,7 +177,7 @@ export function buildReportHtml(
             <th class="num">Saldo</th>
           </tr>
         </thead>
-        <tbody>${resumo || '<tr><td colspan="9" class="empty">Sem marcações no período</td></tr>'}</tbody>
+        <tbody>${resumo || '<tr><td colspan="10" class="empty">Sem marcações no período</td></tr>'}</tbody>
       </table>
     </section>
 
@@ -180,7 +185,8 @@ export function buildReportHtml(
 
     <footer>
       Dias aguardando aprovação não entram nos totais. Dias com atestado ou folga aparecem
-      com saldo zero: não são falta e não geram débito. O intervalo é descontado
+      com saldo zero: não são falta e não geram débito. Dias liberados não são falta, mas a
+      jornada do dia é descontada do saldo. O intervalo é descontado
       automaticamente dos dias com entrada e saída registradas.
     </footer>
   </body>

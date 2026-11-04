@@ -23,11 +23,13 @@ import type { Profile } from "../../types/domain";
 const KIND_OPTIONS: { label: string; value: AbsenceKind }[] = [
   { label: "Atestado", value: "atestado" },
   { label: "Folga", value: "folga" },
+  { label: "Liberado", value: "liberado" },
 ];
 
 const KIND_LABEL: Record<AbsenceKind, string> = {
   atestado: "Atestado",
   folga: "Folga",
+  liberado: "Liberado",
 };
 
 function formatDay(day: string): string {
@@ -129,13 +131,13 @@ export default function AbsencesScreen() {
         summary="Use esta tela quando a funcionária faltou e a ausência é justificada. Sem este registro, o sistema lança falta no dia útil sem marcação e cobra a jornada inteira em saldo devedor."
         steps={[
           "Escolha a funcionária.",
-          "Escolha Atestado ou Folga.",
+          "Escolha o motivo: Atestado ou Folga (dia não cobrado) ou Liberado (dia autorizado, mas a jornada é descontada como falta).",
           "Informe a data inicial em “Do dia”.",
           "Se a ausência durou vários dias, preencha “Até o dia”. Para um dia só, deixe vazio.",
           "Se quiser, anote uma observação — onde está o atestado, quem autorizou a folga.",
           "Clique em Registrar.",
         ]}
-        result="Os dias registrados deixam de ser cobrados: não viram falta e não entram em saldo devedor. É como se fossem feriado, mas valendo só para essa funcionária. Se remover o registro depois, o dia volta a ser cobrado e pode virar falta de novo."
+        result="Atestado e folga deixam o dia sem cobrança: não vira falta e não entra em saldo devedor. É como se fosse feriado, mas valendo só para essa funcionária. Liberado também não aparece como falta, mas a jornada do dia é descontada do banco de horas, igual a uma falta. Se remover o registro depois, o dia volta a ser cobrado e pode virar falta de novo."
         notFor={[
           "Fim de semana e feriado — esses já não são cobrados, não precisa registrar.",
           "Dia em que ela trabalhou e esqueceu de bater o ponto — use a tela Correções.",
@@ -218,13 +220,19 @@ export default function AbsencesScreen() {
               <View
                 style={[
                   styles.kindBadge,
-                  { backgroundColor: row.kind === "atestado" ? colors.warning : colors.chipSelected },
+                  {
+                    backgroundColor:
+                      row.kind === "atestado" ? colors.warning : row.kind === "liberado" ? colors.danger : colors.chipSelected,
+                  },
                 ]}
               >
                 <Text
                   style={[
                     styles.kindText,
-                    { color: row.kind === "atestado" ? "#1c1c1e" : colors.chipSelectedText },
+                    {
+                      color:
+                        row.kind === "atestado" ? "#1c1c1e" : row.kind === "liberado" ? "#ffffff" : colors.chipSelectedText,
+                    },
                   ]}
                 >
                   {KIND_LABEL[row.kind]}

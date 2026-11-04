@@ -11,6 +11,8 @@ export interface EmployeeReport {
   daysAbsent: number;
   /** Dias cobertos por atestado ou folga: aparecem no relatório e não pesam no saldo. */
   daysJustified: number;
+  /** Dias liberados: não são falta, mas a jornada entra no saldo como débito. */
+  daysReleased: number;
   daysPending: number;
   /** Soma dos saldos diários já apurados (pendentes não entram). */
   balanceMinutes: number;
@@ -41,6 +43,7 @@ export function buildReportData(rows: OverviewRow[]): EmployeeReport[] {
         daysIncomplete: 0,
         daysAbsent: 0,
         daysJustified: 0,
+        daysReleased: 0,
         daysPending: 0,
         balanceMinutes: 0,
         overtimeMinutes: 0,
@@ -60,6 +63,7 @@ export function buildReportData(rows: OverviewRow[]): EmployeeReport[] {
     // Atestado e folga não são falta nem dia incompleto: somá-los ali acusaria uma
     // ausência que o admin já justificou.
     else if (row.status === "atestado" || row.status === "folga") report.daysJustified += 1;
+    else if (row.status === "liberado") report.daysReleased += 1;
     else report.daysIncomplete += 1;
 
     if (row.balanceMinutes !== null) {

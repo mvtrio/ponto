@@ -14,6 +14,7 @@ const STATUS_LABEL: Record<OverviewStatus, string> = {
   absent: "Falta",
   atestado: "Atestado",
   folga: "Folga",
+  liberado: "Liberado",
 };
 
 function escapeCsvField(value: string | number): string {

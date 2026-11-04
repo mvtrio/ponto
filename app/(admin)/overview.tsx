@@ -27,6 +27,8 @@ const STATUS_META: Record<
   // Azul e não vermelho: o dia está justificado, não é pendência contra a funcionária.
   atestado: { label: "Atestado", color: colors.accent, icon: "medkit" },
   folga: { label: "Folga", color: colors.accent, icon: "cafe" },
+  // Laranja: autorizado, mas a jornada foi descontada do banco.
+  liberado: { label: "Liberado", color: colors.warning, icon: "exit" },
 };
 
 const COL = { status: 150, employee: 260, day: 150, time: 120, balance: 130 };

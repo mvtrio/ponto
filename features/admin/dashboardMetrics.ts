@@ -8,6 +8,8 @@ export interface PeriodMetrics {
   absentDays: number;
   /** Dias cobertos por atestado ou folga. */
   justifiedDays: number;
+  /** Dias em que o funcionário foi liberado: não é falta, mas a jornada é descontada. */
+  releasedDays: number;
   /** Dias com marcação faltando a outra ponta do par. */
   incompleteDays: number;
   /** Dias com marcação aguardando aprovação do admin. */
@@ -34,6 +36,7 @@ export function buildPeriodMetrics(rows: OverviewRow[], summaries: DailySummary[
   let workedDays = 0;
   let absentDays = 0;
   let justifiedDays = 0;
+  let releasedDays = 0;
   let incompleteDays = 0;
   let pendingDays = 0;
 
@@ -49,6 +52,9 @@ export function buildPeriodMetrics(rows: OverviewRow[], summaries: DailySummary[
       case "folga":
         justifiedDays += 1;
         break;
+      case "liberado":
+        releasedDays += 1;
+        break;
       case "pending":
         pendingDays += 1;
         break;
@@ -62,9 +68,11 @@ export function buildPeriodMetrics(rows: OverviewRow[], summaries: DailySummary[
   let expectedMinutes = 0;
   for (const summary of summaries) {
     workedMinutes += summary.worked_minutes;
-    // Dia justificado não é cobrado, então não entra na jornada esperada — somá-lo faria
-    // o total parecer uma dívida que não existe.
-    if (!summary.absence_kind) expectedMinutes += summary.standard_daily_minutes;
+    // Atestado/folga não são cobrados, então não entram na jornada esperada — somá-los
+    // faria o total parecer uma dívida que não existe. Liberado é cobrado: entra.
+    if (!summary.absence_kind || summary.absence_kind === "liberado") {
+      expectedMinutes += summary.standard_daily_minutes;
+    }
   }
 
   const charged = workedDays + incompleteDays + absentDays;
@@ -73,6 +81,7 @@ export function buildPeriodMetrics(rows: OverviewRow[], summaries: DailySummary[
     workedDays,
     absentDays,
     justifiedDays,
+    releasedDays,
     incompleteDays,
     pendingDays,
     workedMinutes,
@@ -147,6 +156,7 @@ export function buildDayComposition(metrics: PeriodMetrics): CompositionSlice[] 
     { key: "worked", label: "Trabalhados", value: metrics.workedDays },
     { key: "absent", label: "Faltas", value: metrics.absentDays },
     { key: "justified", label: "Atestado/folga", value: metrics.justifiedDays },
+    { key: "released", label: "Liberado", value: metrics.releasedDays },
     { key: "incomplete", label: "Incompletos", value: metrics.incompleteDays },
     { key: "pending", label: "Aguardando", value: metrics.pendingDays },
   ].filter((slice) => slice.value > 0);

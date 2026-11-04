@@ -37,7 +37,7 @@ function summary(
     worked_minutes,
     is_incomplete: false,
     standard_daily_minutes: 480,
-    balance_minutes: absence_kind ? 0 : worked_minutes - 480,
+    balance_minutes: absence_kind && absence_kind !== "liberado" ? 0 : worked_minutes - 480,
     absence_kind,
   };
 }
@@ -62,6 +62,19 @@ test("conta cada status na sua categoria", () => {
   assert.equal(m.justifiedDays, 2);
   assert.equal(m.incompleteDays, 2); // incomplete + rejected
   assert.equal(m.pendingDays, 1);
+});
+
+test("dia liberado conta à parte e entra na jornada esperada, como falta", () => {
+  const m = buildPeriodMetrics(
+    [row("2026-09-01", "ok"), row("2026-09-02", "liberado")],
+    [summary("2026-09-01", 480), summary("2026-09-02", 0, "liberado")]
+  );
+  assert.equal(m.releasedDays, 1);
+  assert.equal(m.absentDays, 0);
+  assert.equal(m.justifiedDays, 0);
+  assert.equal(m.expectedMinutes, 960);
+  // Liberado não é falta: não derruba a assiduidade.
+  assert.equal(m.attendanceRate, 1);
 });
 
 test("dia justificado não entra na jornada esperada", () => {

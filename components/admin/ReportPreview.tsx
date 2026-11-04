@@ -20,6 +20,8 @@ const STATUS_META: Record<
   absent: { label: "Falta", color: colors.danger, icon: "close-circle" },
   atestado: { label: "Atestado", color: colors.accent, icon: "medkit" },
   folga: { label: "Folga", color: colors.accent, icon: "cafe" },
+  // Laranja: autorizado, mas a jornada foi descontada do banco.
+  liberado: { label: "Liberado", color: colors.warning, icon: "exit" },
 };
 
 function formatDay(day: string): string {
@@ -54,6 +56,12 @@ function Totals({ report }: { report: EmployeeReport }) {
         <Text style={styles.totalLabel}>Atestado/folga</Text>
         <Text style={[styles.totalValue, report.daysJustified > 0 && { color: colors.accent }]}>
           {report.daysJustified}
+        </Text>
+      </View>
+      <View style={styles.total}>
+        <Text style={styles.totalLabel}>Liberado</Text>
+        <Text style={[styles.totalValue, report.daysReleased > 0 && { color: colors.warning }]}>
+          {report.daysReleased}
         </Text>
       </View>
       <View style={styles.total}>

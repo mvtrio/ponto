@@ -83,7 +83,7 @@ export interface CompanySettings {
   updated_at: string;
 }
 
-export type AbsenceKind = "atestado" | "folga";
+export type AbsenceKind = "atestado" | "folga" | "liberado";
 
 export interface DailySummary {
   employee_id: string;

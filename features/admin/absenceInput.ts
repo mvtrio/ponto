@@ -1,4 +1,4 @@
-export type AbsenceKind = "atestado" | "folga";
+export type AbsenceKind = "atestado" | "folga" | "liberado";
 
 export interface AbsenceRangeResult {
   days: string[];

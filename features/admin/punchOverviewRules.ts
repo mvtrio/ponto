@@ -8,7 +8,8 @@ export type OverviewStatus =
   | "rejected"
   | "absent"
   | "atestado"
-  | "folga";
+  | "folga"
+  | "liberado";
 
 export interface OverviewRow {
   key: string;

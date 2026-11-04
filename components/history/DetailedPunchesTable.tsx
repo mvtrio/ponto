@@ -13,6 +13,7 @@ const STATUS_ICON: Record<DetailedDayRow["status"], { name: keyof typeof Ionicon
   absent: { name: "close-circle", color: colors.danger },
   atestado: { name: "medkit", color: colors.accent },
   folga_justificada: { name: "cafe", color: colors.accent },
+  liberado: { name: "exit", color: colors.warning },
 };
 
 /** Texto que ocupa as colunas de horário quando não houve marcação no dia. */
@@ -22,6 +23,7 @@ const NO_PUNCH_LABEL: Partial<Record<DetailedDayRow["status"], string>> = {
   absent: "FALTA",
   atestado: "ATESTADO",
   folga_justificada: "FOLGA",
+  liberado: "LIBERADO",
 };
 
 // Dimensões generosas: a tabela é lida no dia a dia por quem enxerga mal, então
@@ -79,6 +81,7 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
           const isHoliday = row.status === "holiday";
           const isJustified = row.status === "atestado" || row.status === "folga_justificada";
           const noPunchLabel = NO_PUNCH_LABEL[row.status];
+          const isReleased = row.status === "liberado";
           const timeColor =
             isFolga || isHoliday
               ? colors.textFaint
@@ -86,6 +89,8 @@ export function DetailedPunchesTable({ rows, loading }: { rows: DetailedDayRow[]
               ? colors.accent
               : isAbsent
               ? colors.danger
+              : isReleased
+              ? colors.warning
               : row.status === "warning"
               ? colors.warning
               : colors.text;

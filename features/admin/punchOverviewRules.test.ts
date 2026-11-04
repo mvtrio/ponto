@@ -62,6 +62,12 @@ test("folga justificada tem status próprio, separado de falta", () => {
   assert.equal(rows[0].status, "folga");
 });
 
+test("dia liberado tem status próprio e carrega o desconto da jornada", () => {
+  const rows = buildOverviewRows([], [summary("e1", "2026-09-30", -480, "liberado")], NAMES);
+  assert.equal(rows[0].status, "liberado");
+  assert.equal(rows[0].balanceMinutes, -480);
+});
+
 test("dia útil sem marcação e sem justificativa continua sendo falta", () => {
   const rows = buildOverviewRows([], [summary("e1", "2026-09-18", -480)], NAMES);
   assert.equal(rows[0].status, "absent");

@@ -222,6 +222,7 @@ export default function DashboardScreen() {
           <Metric label="Dias trabalhados" value={String(metrics.workedDays)} color={colors.success} />
           <Metric label="Faltas" value={String(metrics.absentDays)} color={colors.danger} />
           <Metric label="Atestado/folga" value={String(metrics.justifiedDays)} color={colors.accent} />
+          <Metric label="Liberado" value={String(metrics.releasedDays)} color={colors.warning} />
           <Metric label="Aguardando" value={String(metrics.pendingDays)} color={colors.warning} />
           <Metric label="Horas trabalhadas" value={formatMinutes(metrics.workedMinutes)} />
           <Metric label="Jornada prevista" value={formatMinutes(metrics.expectedMinutes)} />

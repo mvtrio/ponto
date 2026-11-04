@@ -5,7 +5,7 @@ import { fetchDailySummaries } from "./hoursService";
 import { addDays, appDate, appTime, appWeekday, startOfAppDay } from "../../lib/appDate";
 import type { Punch } from "../../types/domain";
 
-export type DayStatus = "ok" | "warning" | "folga" | "holiday" | "absent" | "atestado" | "folga_justificada";
+export type DayStatus = "ok" | "warning" | "folga" | "holiday" | "absent" | "atestado" | "folga_justificada" | "liberado";
 
 export interface DetailedDayRow {
   day: string;
@@ -82,6 +82,10 @@ export async function fetchDetailedDayRows(
     if (dayPunches.length === 0) {
       // Justificativa antes de feriado e de escala: se o admin registrou atestado no dia,
       // é essa a informação que o relatório precisa mostrar.
+      // Liberado: o dia é autorizado, mas a jornada é descontada — o saldo aparece.
+      if (summary?.absence_kind === "liberado") {
+        return { day, label, status: "liberado" as const, ...emptyTimes, balanceMinutes: summary.balance_minutes };
+      }
       if (summary?.absence_kind) {
         return {
           day,
