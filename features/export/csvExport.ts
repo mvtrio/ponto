@@ -30,7 +30,7 @@ function escapeCsvField(value: string | number): string {
  * diários, sem os horários, que é justamente o que se quer conferir numa planilha.
  */
 export function buildCsv(reports: EmployeeReport[]): string {
-  const header = ["funcionario", "dia", "entrada", "saida", "saldo_minutos", "saldo", "situacao"];
+  const header = ["funcionario", "dia", "entrada", "saida", "saldo_minutos", "saldo", "situacao", "observacao"];
   const lines = [header.join(",")];
 
   for (const report of reports) {
@@ -44,6 +44,7 @@ export function buildCsv(reports: EmployeeReport[]): string {
           escapeCsvField(day.balanceMinutes ?? ""),
           escapeCsvField(day.balanceMinutes === null ? "" : formatMinutes(day.balanceMinutes)),
           escapeCsvField(STATUS_LABEL[day.status]),
+          escapeCsvField(day.notes ?? ""),
         ].join(",")
       );
     }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DateField } from "../../components/ui/DateField";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
@@ -26,7 +27,7 @@ export default function ReportsScreen() {
   useEffect(() => {
     let cancelled = false;
     if (!isValidDate(fromDate) || !isValidDate(toDate)) {
-      setError("Informe datas válidas no formato AAAA-MM-DD.");
+      setError("Informe datas válidas no formato DD/MM/AAAA.");
       return;
     }
     setLoading(true);
@@ -72,22 +73,18 @@ export default function ReportsScreen() {
         <View style={styles.filters}>
           <View style={styles.dateField}>
             <Text style={styles.label}>De</Text>
-            <TextInput
-              style={styles.input}
+            <DateField
               value={fromDate}
-              onChangeText={setFromDate}
-              placeholder="AAAA-MM-DD"
-              placeholderTextColor={colors.textFaint}
+              onChange={setFromDate}
+              inputStyle={styles.input}
             />
           </View>
           <View style={styles.dateField}>
             <Text style={styles.label}>Até</Text>
-            <TextInput
-              style={styles.input}
+            <DateField
               value={toDate}
-              onChangeText={setToDate}
-              placeholder="AAAA-MM-DD"
-              placeholderTextColor={colors.textFaint}
+              onChange={setToDate}
+              inputStyle={styles.input}
             />
           </View>
         </View>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { DateField } from "../../components/ui/DateField";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
@@ -90,7 +91,7 @@ export default function EmployeeCorrectionsScreen() {
 
     if (!profile) return;
     if (!isValidDate(date)) {
-      setError("Data inválida. Use o formato AAAA-MM-DD.");
+      setError("Data inválida. Use o formato DD/MM/AAAA.");
       return;
     }
     if (!isValidTime(time)) {
@@ -132,12 +133,10 @@ export default function EmployeeCorrectionsScreen() {
         </Text>
 
         <Text style={styles.label}>Dia</Text>
-        <TextInput
-          style={styles.input}
+        <DateField
           value={date}
-          onChangeText={setDate}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
+          onChange={setDate}
+          inputStyle={styles.input}
         />
         <WeekdayLabel day={date} />
 

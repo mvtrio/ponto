@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { DateField } from "../../components/ui/DateField";
+import { isoToBr } from "../../components/ui/brDate";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
@@ -127,7 +129,7 @@ export default function SettingsScreen() {
   async function handleAddHoliday() {
     setHolidayError(null);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(newHolidayDate)) {
-      setHolidayError("Data inválida. Use o formato AAAA-MM-DD.");
+      setHolidayError("Data inválida. Use o formato DD/MM/AAAA.");
       return;
     }
     if (!newHolidayName.trim()) {
@@ -198,7 +200,7 @@ export default function SettingsScreen() {
         {holidays.map((h) => (
           <View key={h.day} style={styles.holidayRow}>
             <Text style={styles.holidayText}>
-              {h.day} — {h.name}
+              {isoToBr(h.day)} — {h.name}
             </Text>
             <Pressable onPress={() => handleDeleteHoliday(h.day)}>
               <Text style={styles.holidayRemove}>Remover</Text>
@@ -209,12 +211,10 @@ export default function SettingsScreen() {
           <Text style={styles.hint}>Nenhum feriado adicional cadastrado.</Text>
         ) : null}
 
-        <TextInput
-          style={styles.input}
-          placeholder="Data (AAAA-MM-DD)"
-          placeholderTextColor={colors.textFaint}
+        <DateField
           value={newHolidayDate}
-          onChangeText={setNewHolidayDate}
+          onChange={setNewHolidayDate}
+          inputStyle={styles.input}
         />
         <TextInput
           style={styles.input}

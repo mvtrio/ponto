@@ -146,6 +146,8 @@ export function ReportPreview({ reports }: { reports: EmployeeReport[] }) {
                     </Text>
                     <Text style={[styles.dayStatus, { color: meta.color }]}>{meta.label}</Text>
                   </View>
+
+                  {day.notes ? <Text style={styles.dayNotes}>{day.notes}</Text> : null}
                 </View>
               );
             })}
@@ -187,5 +189,7 @@ const styles = StyleSheet.create({
   dayRight: { flexDirection: "row", alignItems: "center", gap: 12 },
   dayBalance: { fontSize: 17, fontWeight: "700", fontVariant: ["tabular-nums"] },
   dayStatus: { fontSize: 15, minWidth: 96, textAlign: "right" },
+  // Linha inteira abaixo do dia: observação é texto livre e não cabe ao lado do saldo.
+  dayNotes: { width: "100%", fontSize: 15, color: colors.textMuted, fontStyle: "italic" },
   empty: { fontSize: 16, color: colors.textMuted, paddingVertical: 12 },
 });

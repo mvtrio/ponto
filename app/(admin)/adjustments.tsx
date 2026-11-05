@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { DateField } from "../../components/ui/DateField";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -81,7 +82,7 @@ export default function AdjustmentsScreen() {
       return;
     }
     if (!isValidDate(day)) {
-      setError("Data inválida. Use o formato AAAA-MM-DD.");
+      setError("Data inválida. Use o formato DD/MM/AAAA.");
       return;
     }
     const { minutes, error: parseError } = parseAdjustmentMinutes(horas, minutos, kind);
@@ -176,12 +177,10 @@ export default function AdjustmentsScreen() {
         <SegmentedControl options={KIND_OPTIONS} value={kind} onChange={setKind} />
 
         <Text style={styles.label}>Data de referência</Text>
-        <TextInput
-          style={styles.input}
+        <DateField
           value={day}
-          onChangeText={setDay}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
+          onChange={setDay}
+          inputStyle={styles.input}
         />
         <WeekdayLabel day={day} />
 

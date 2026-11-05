@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { DateField } from "../../components/ui/DateField";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { CorrectionRow, ReviewedCorrectionRow } from "../../components/admin/CorrectionRow";
@@ -116,7 +117,7 @@ export default function CorrectionsScreen() {
       return;
     }
     if (!isValidDate(date)) {
-      setFormError("Data inválida. Use o formato AAAA-MM-DD.");
+      setFormError("Data inválida. Use o formato DD/MM/AAAA.");
       return;
     }
     if (!isValidTime(time)) {
@@ -201,12 +202,11 @@ export default function CorrectionsScreen() {
 
         <Text style={styles.label}>Data e hora corretas</Text>
         <View style={styles.inputRow}>
-          <TextInput
-            style={[styles.input, styles.dateInput]}
+          <DateField
             value={date}
-            onChangeText={setDate}
-            placeholder="AAAA-MM-DD"
-            placeholderTextColor={colors.textFaint}
+            onChange={setDate}
+            style={styles.dateInput}
+            inputStyle={styles.input}
           />
           <TextInput
             style={[styles.input, styles.timeInput]}

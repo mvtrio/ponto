@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { DateField } from "../../components/ui/DateField";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -169,22 +170,18 @@ export default function AbsencesScreen() {
         <SegmentedControl options={KIND_OPTIONS} value={kind} onChange={setKind} />
 
         <Text style={styles.label}>Do dia</Text>
-        <TextInput
-          style={styles.input}
+        <DateField
           value={fromDay}
-          onChangeText={setFromDay}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
+          onChange={setFromDay}
+          inputStyle={styles.input}
         />
         <WeekdayLabel day={fromDay} />
 
         <Text style={styles.label}>Até o dia (deixe vazio para um dia só)</Text>
-        <TextInput
-          style={styles.input}
+        <DateField
           value={toDay}
-          onChangeText={setToDay}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
+          onChange={setToDay}
+          inputStyle={styles.input}
         />
         {toDay.trim() ? <WeekdayLabel day={toDay} /> : null}
 

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { DateField } from "../ui/DateField";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Card } from "../ui/Card";
@@ -22,23 +23,19 @@ export function PeriodFilter({ fromDate, toDate, onChangeFromDate, onChangeToDat
       </View>
       <View style={styles.dateRow}>
         <View style={styles.dateField}>
-          <TextInput
-            style={styles.dateInput}
+          <DateField
             value={fromDate}
-            onChangeText={onChangeFromDate}
-            placeholder="AAAA-MM-DD"
-            placeholderTextColor={colors.textFaint}
+            onChange={onChangeFromDate}
+            inputStyle={styles.dateInput}
           />
           <WeekdayLabel day={fromDate} style={styles.weekday} />
         </View>
         <Text style={styles.dash}>—</Text>
         <View style={styles.dateField}>
-          <TextInput
-            style={styles.dateInput}
+          <DateField
             value={toDate}
-            onChangeText={onChangeToDate}
-            placeholder="AAAA-MM-DD"
-            placeholderTextColor={colors.textFaint}
+            onChange={onChangeToDate}
+            inputStyle={styles.dateInput}
           />
           <WeekdayLabel day={toDate} style={styles.weekday} />
         </View>

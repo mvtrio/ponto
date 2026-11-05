@@ -85,6 +85,7 @@ export function buildReportHtml(
                 day.balanceMinutes === null ? "" : day.balanceMinutes >= 0 ? "pos" : "neg"
               }">${day.balanceMinutes === null ? "—" : signed(day.balanceMinutes)}</td>
               <td>${STATUS_LABEL[day.status]}</td>
+              <td class="notes">${day.notes ? escapeHtml(day.notes) : ""}</td>
             </tr>`
         )
         .join("");
@@ -105,9 +106,9 @@ export function buildReportHtml(
           </p>
           <table>
             <thead>
-              <tr><th>Dia</th><th class="num">Entrada</th><th class="num">Saída</th><th class="num">Saldo</th><th>Situação</th></tr>
+              <tr><th>Dia</th><th class="num">Entrada</th><th class="num">Saída</th><th class="num">Saldo</th><th>Situação</th><th>Observação</th></tr>
             </thead>
-            <tbody>${linhas || '<tr><td colspan="5" class="empty">Sem marcações no período</td></tr>'}</tbody>
+            <tbody>${linhas || '<tr><td colspan="6" class="empty">Sem marcações no período</td></tr>'}</tbody>
           </table>
         </section>`;
     })
@@ -150,6 +151,7 @@ export function buildReportHtml(
       /* Azul e não vermelho: o dia está justificado, não é uma pendência contra ela. */
       tr.atestado td, tr.folga td { background: #eaf2fd; color: #14407a; }
       tr.liberado td { background: #fff3e0; color: #7a4a00; }
+      td.notes { font-style: italic; }
       .empty { text-align: center; color: #777; font-style: italic; }
       footer { margin-top: 24px; font-size: 11px; color: #777; border-top: 1px solid #ddd; padding-top: 8px; }
     </style>

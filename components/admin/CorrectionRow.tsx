@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DateField } from "../ui/DateField";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../ui/Button";
@@ -68,12 +69,11 @@ export function CorrectionRow({ correction, onApprove, onReject, loading }: Corr
 
       <Text style={styles.label}>Horário corrigido</Text>
       <View style={styles.inputRow}>
-        <TextInput
-          style={[styles.input, styles.dateInput, !dateValid && styles.inputInvalid]}
+        <DateField
           value={date}
-          onChangeText={setDate}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textFaint}
+          onChange={setDate}
+          style={styles.dateInput}
+          inputStyle={[styles.input, !dateValid && styles.inputInvalid]}
         />
         <TextInput
           style={[styles.input, styles.timeInput, !timeValid && styles.inputInvalid]}
@@ -83,7 +83,7 @@ export function CorrectionRow({ correction, onApprove, onReject, loading }: Corr
           placeholderTextColor={colors.textFaint}
         />
       </View>
-      {!canApprove ? <Text style={styles.error}>Informe data (AAAA-MM-DD) e hora (HH:MM) válidas.</Text> : null}
+      {!canApprove ? <Text style={styles.error}>Informe data (DD/MM/AAAA) e hora (HH:MM) válidas.</Text> : null}
 
       <View style={styles.actions}>
         <View style={styles.actionButton}>
