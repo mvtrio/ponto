@@ -23,6 +23,8 @@ const STATUS_META: Record<
   // Laranja: autorizado, mas a jornada foi descontada do banco.
   liberado: { label: "Liberado", color: colors.warning, icon: "exit" },
   feriado: { label: "Feriado", color: colors.warning, icon: "calendar" },
+  // Cinza: no fim de semana não há nada a justificar nem a conferir.
+  folga_escala: { label: "Folga", color: colors.textFaint, icon: "cafe" },
 };
 
 function formatDay(day: string): string {

@@ -187,12 +187,69 @@ test("feriado trabalhado mantém a linha real, com horário e saldo", () => {
   assert.equal(rows[0].balanceMinutes, 60);
 });
 
-test("feriado em fim de semana não vira linha", () => {
-  // 15/11/2026 é domingo: sábado e domingo não aparecem no quadro, e um feriado neles
-  // criaria um dia solto sem par.
-  const rows = buildOverviewRows([], [summary("e1", "2026-11-13", 0)], NAMES, new Map(), ["2026-11-15"]);
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0].day, "2026-11-13");
+test("feriado em fim de semana aparece como folga, não como feriado", () => {
+  // 15/11/2026 é domingo: não havia expediente a dispensar, e anunciar "Feriado" ali
+  // sugeriria uma folga que o dia já tinha.
+  const rows = buildOverviewRows(
+    [],
+    [summary("e1", "2026-11-13", 0)],
+    NAMES,
+    new Map(),
+    ["2026-11-15"],
+    ["2026-11-14", "2026-11-15"]
+  );
+
+  assert.equal(rows.find((r) => r.day === "2026-11-15")?.status, "folga_escala");
+  assert.equal(rows.filter((r) => r.day === "2026-11-15").length, 1, "um dia, uma linha");
+});
+
+test("sábado e domingo ganham linha de folga, em vez de sumir da sequência", () => {
+  // 14 e 15/11/2026 são sábado e domingo. Sem a linha, o quadro mostrava 13/11 logo
+  // acima de 16/11 e o fim de semana parecia não ter existido.
+  const rows = buildOverviewRows(
+    [],
+    [summary("e1", "2026-11-13", 0), summary("e1", "2026-11-16", 0)],
+    NAMES,
+    new Map(),
+    [],
+    ["2026-11-14", "2026-11-15"]
+  );
+
+  assert.deepEqual(
+    rows.map((r) => r.day),
+    ["2026-11-16", "2026-11-15", "2026-11-14", "2026-11-13"]
+  );
+
+  const sabado = rows.find((r) => r.day === "2026-11-14");
+  assert.equal(sabado?.status, "folga_escala");
+  assert.equal(sabado?.entrada, null);
+  assert.equal(sabado?.saida, null);
+  assert.equal(sabado?.balanceMinutes, null, "folga não é cobrada: saldo não pode virar número");
+  assert.equal(sabado?.notes, null);
+});
+
+test("fim de semana trabalhado mantém a linha real, com horário e saldo", () => {
+  const rows = buildOverviewRows(
+    [
+      punch("e1", "clock_in", "2026-11-14T11:00:00.000Z"),
+      punch("e1", "clock_out", "2026-11-14T21:00:00.000Z"),
+    ],
+    [summary("e1", "2026-11-14", 540)],
+    NAMES,
+    new Map(),
+    [],
+    ["2026-11-14"]
+  );
+
+  assert.equal(rows.length, 1, "não pode nascer uma segunda linha para o mesmo dia");
+  assert.equal(rows[0].status, "ok");
+  assert.equal(rows[0].entrada, "08:00");
+  assert.equal(rows[0].balanceMinutes, 540, "quem trabalhou no sábado não perde as horas");
+});
+
+test("fim de semana anterior ao primeiro dia da pessoa no período não é inventado", () => {
+  const rows = buildOverviewRows([], [summary("e1", "2026-11-16", 0)], NAMES, new Map(), [], ["2026-11-14"]);
+  assert.equal(rows.length, 1, "antes do primeiro dia acompanhado não há o que noticiar");
 });
 
 test("feriado anterior ao primeiro dia da pessoa no período não é inventado", () => {

@@ -1,4 +1,4 @@
-import { appDate, appTime, appWeekday } from "../../lib/appDate.ts";
+import { appDate, appTime } from "../../lib/appDate.ts";
 import type { AbsenceKind, DailySummary, Punch } from "../../types/domain.ts";
 
 export type OverviewStatus =
@@ -10,7 +10,11 @@ export type OverviewStatus =
   | "atestado"
   | "folga"
   | "liberado"
-  | "feriado";
+  | "feriado"
+  // Dia fora da escala (sábado e domingo, pela configuração atual). Separado de `folga`,
+  // que é a folga justificada lançada pelo admin: esta não tem justificativa nenhuma,
+  // simplesmente não há expediente.
+  | "folga_escala";
 
 export interface OverviewRow {
   key: string;
@@ -36,7 +40,9 @@ export function buildOverviewRows(
   /** Observações das ausências registradas, por `funcionário|dia`. */
   notesByKey: Map<string, string> = new Map(),
   /** Feriados do período (YYYY-MM-DD), nacionais e cadastrados. */
-  feriados: Iterable<string> = []
+  feriados: Iterable<string> = [],
+  /** Dias do período fora da escala de trabalho (YYYY-MM-DD) — sábado e domingo. */
+  folgas: Iterable<string> = []
 ): OverviewRow[] {
   const balanceByKey = new Map(summaries.map((s) => [`${s.employee_id}|${s.day}`, s.balance_minutes]));
   const absenceByKey = new Map<string, AbsenceKind>();
@@ -102,46 +108,53 @@ export function buildOverviewRows(
     });
   }
 
-  // ⚠️ O FERIADO NÃO VEM DE LUGAR NENHUM, e é por isso que ele precisa ser inserido aqui.
-  // As linhas acima nascem de marcação ou de resumo diário, e a view `daily_summary` só
-  // gera linha para dia útil (`is_holiday`). Resultado: o feriado sem marcação não era
-  // falta nem nada — simplesmente sumia do meio da sequência, e quem olhava via 19/11
-  // logo abaixo de 23/11, como se o dia não tivesse existido. A linha é montada aqui, e
-  // não no SQL, de propósito: no banco de horas o feriado não é cobrado e não deve virar
-  // registro; o que falta é só a notícia na tela.
+  // ⚠️ FERIADO E FIM DE SEMANA NÃO VÊM DE LUGAR NENHUM, e é por isso que eles precisam
+  // ser inseridos aqui. As linhas acima nascem de marcação ou de resumo diário, e a view
+  // `daily_summary` só gera linha para dia útil (`is_working_day`). Resultado: o dia sem
+  // expediente não era falta nem nada — simplesmente sumia do meio da sequência, e quem
+  // olhava via sexta logo abaixo de segunda, como se o fim de semana não tivesse
+  // existido. A linha é montada aqui, e não no SQL, de propósito: no banco de horas esses
+  // dias não são cobrados e não devem virar registro; o que falta é só a notícia na tela.
   //
-  // Quem trabalhou no feriado já tem linha (as marcações existem), e essa linha fica como
-  // está: mostrar "Feriado" por cima apagaria as horas que a pessoa de fato cumpriu.
+  // Quem trabalhou no dia já tem linha (as marcações existem), e essa linha fica como
+  // está: escrever "Feriado" ou "Folga" por cima apagaria as horas de fato cumpridas.
   const primeiroDia = new Map<string, string>();
   for (const row of rows) {
     const atual = primeiroDia.get(row.employeeId);
     if (!atual || row.day < atual) primeiroDia.set(row.employeeId, row.day);
   }
 
-  for (const [employeeId, inicio] of primeiroDia) {
-    for (const day of feriados) {
-      // Antes do primeiro dia da pessoa no período não há o que noticiar: ela ainda não
-      // estava sendo acompanhada, e a linha seria invenção.
-      if (day < inicio) continue;
-      if (byKey.has(`${employeeId}|${day}`)) continue;
-      // Feriado em fim de semana não ganha linha: sábado e domingo nunca aparecem no
-      // quadro, e abrir uma exceção só para eles criaria um dia solto sem par.
-      const diaDaSemana = appWeekday(day);
-      if (diaDaSemana === 0 || diaDaSemana === 6) continue;
+  const ocupado = new Set(byKey.keys());
 
-      rows.push({
-        key: `${employeeId}|${day}`,
-        employeeId,
-        employeeName: nameById.get(employeeId) ?? "Funcionário",
-        day,
-        entrada: null,
-        saida: null,
-        balanceMinutes: null,
-        status: "feriado",
-        notes: null,
-      });
+  function noticiarDias(dias: Iterable<string>, status: OverviewStatus) {
+    for (const [employeeId, inicio] of primeiroDia) {
+      for (const day of dias) {
+        // Antes do primeiro dia da pessoa no período não há o que noticiar: ela ainda não
+        // estava sendo acompanhada, e a linha seria invenção.
+        if (day < inicio) continue;
+        const key = `${employeeId}|${day}`;
+        if (ocupado.has(key)) continue;
+        ocupado.add(key);
+
+        rows.push({
+          key,
+          employeeId,
+          employeeName: nameById.get(employeeId) ?? "Funcionário",
+          day,
+          entrada: null,
+          saida: null,
+          balanceMinutes: null,
+          status,
+          notes: null,
+        });
+      }
     }
   }
+
+  // Fim de semana antes de feriado: num feriado que cai no sábado não há expediente a
+  // dispensar, e anunciar "Feriado" ali sugeriria uma folga que o dia já tinha.
+  noticiarDias(folgas, "folga_escala");
+  noticiarDias(feriados, "feriado");
 
   return rows.sort((a, b) =>
     a.day === b.day ? a.employeeName.localeCompare(b.employeeName) : b.day.localeCompare(a.day)

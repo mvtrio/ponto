@@ -15,6 +15,7 @@ const STATUS_LABEL: Record<OverviewStatus, string> = {
   folga: "Folga",
   liberado: "Liberado",
   feriado: "Feriado",
+  folga_escala: "Folga",
 };
 
 function escapeHtml(value: string): string {
