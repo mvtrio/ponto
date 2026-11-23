@@ -58,6 +58,10 @@ export function buildReportData(rows: OverviewRow[]): EmployeeReport[] {
       report.daysPending += 1;
       continue;
     }
+    // Feriado aparece no relatório como dia, mas não entra em contador nenhum: não foi
+    // trabalhado, não é falta e não tem jornada a cumprir. Sem sair aqui, cairia no
+    // `else` final e seria somado aos dias incompletos.
+    if (row.status === "feriado") continue;
     if (row.status === "ok") report.daysWorked += 1;
     else if (row.status === "absent") report.daysAbsent += 1;
     // Atestado e folga não são falta nem dia incompleto: somá-los ali acusaria uma

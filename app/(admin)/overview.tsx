@@ -30,7 +30,19 @@ const STATUS_META: Record<
   folga: { label: "Folga", color: colors.accent, icon: "cafe" },
   // Laranja: autorizado, mas a jornada foi descontada do banco.
   liberado: { label: "Liberado", color: colors.warning, icon: "exit" },
+  // ⚠️ AMARELO POR PEDIDO EXPRESSO (23/11/2026), e não por descuido: o histórico da
+  // funcionária (DetailedPunchesTable) pinta o feriado de azul, como dia justificado.
+  // Aqui foi pedido amarelo, e as duas telas ficam diferentes de propósito — quem for
+  // uniformizar a cor do feriado mais tarde não deve "acertar" esta sem perguntar.
+  feriado: { label: "Feriado", color: colors.warning, icon: "calendar" },
 };
+
+/**
+ * No feriado não há hora, saldo nem observação a mostrar — e um travessão em cada coluna
+ * seria indistinguível de um dia sem dado. A palavra repetida, em amarelo, diz o motivo
+ * em todas as colunas: quem corre o olho pela linha lê "feriado" onde quer que pare.
+ */
+const FERIADO = "Feriado";
 
 const COL = { status: 150, employee: 260, day: 150, time: 120, balance: 130, notes: 360 };
 
@@ -161,6 +173,7 @@ export default function OverviewScreen() {
 
             {rows.map((row) => {
               const meta = STATUS_META[row.status];
+              const feriado = row.status === "feriado";
               return (
                 <View key={row.key} style={styles.row}>
                   <View style={[styles.cell, { width: COL.status, flexDirection: "row", gap: 8 }]}>
@@ -173,16 +186,18 @@ export default function OverviewScreen() {
                   <Cell width={COL.day} color={colors.text}>
                     {formatDay(row.day)}
                   </Cell>
-                  <Cell width={COL.time} color={colors.text}>
-                    {row.entrada ?? "—"}
+                  <Cell width={COL.time} color={feriado ? colors.warning : colors.text}>
+                    {feriado ? FERIADO : row.entrada ?? "—"}
                   </Cell>
-                  <Cell width={COL.time} color={colors.text}>
-                    {row.saida ?? "—"}
+                  <Cell width={COL.time} color={feriado ? colors.warning : colors.text}>
+                    {feriado ? FERIADO : row.saida ?? "—"}
                   </Cell>
                   <Cell
                     width={COL.balance}
                     color={
-                      row.balanceMinutes === null
+                      feriado
+                        ? colors.warning
+                        : row.balanceMinutes === null
                         ? colors.textFaint
                         : row.balanceMinutes >= 0
                         ? colors.success
@@ -190,11 +205,20 @@ export default function OverviewScreen() {
                     }
                     bold
                   >
-                    {row.balanceMinutes === null ? "—" : formatMinutes(row.balanceMinutes)}
+                    {feriado
+                      ? FERIADO
+                      : row.balanceMinutes === null
+                      ? "—"
+                      : formatMinutes(row.balanceMinutes)}
                   </Cell>
                   <View style={[styles.cell, { width: COL.notes }]}>
-                    <Text style={[styles.notesText, row.notes ? null : { color: colors.textFaint }]}>
-                      {row.notes ?? "—"}
+                    <Text
+                      style={[
+                        styles.notesText,
+                        feriado ? { color: colors.warning } : row.notes ? null : { color: colors.textFaint },
+                      ]}
+                    >
+                      {feriado ? FERIADO : row.notes ?? "—"}
                     </Text>
                   </View>
                 </View>

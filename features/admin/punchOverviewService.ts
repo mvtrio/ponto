@@ -1,8 +1,9 @@
 import { fetchDailySummariesForAll } from "../hours/hoursService";
 import { fetchPunchesForRangeAll } from "../punches/punchService";
-import { addDays, startOfAppDay } from "../../lib/appDate";
+import { addDays, appToday, startOfAppDay } from "../../lib/appDate";
 import { fetchEmployees } from "./adminService";
 import { fetchAbsenceNotes } from "./absencesService";
+import { fetchHolidays } from "../company/holidaysService";
 import { buildOverviewRows, type OverviewRow } from "./punchOverviewRules";
 
 export type { OverviewRow, OverviewStatus } from "./punchOverviewRules";
@@ -17,21 +18,27 @@ export interface PunchOverview {
 /**
  * Quadro de acompanhamento das marcações de todos os funcionários no período.
  *
- * Três consultas no total (funcionários, marcações, resumo diário) em vez de uma rodada
- * por funcionário: a visão geral cresce com o número de pessoas e não deve multiplicar
- * requisições. Só dias com alguma marcação aparecem — dia sem marcação nenhuma é assunto
- * do banco de horas individual, não deste acompanhamento.
+ * Uma rodada de consultas para todo mundo (funcionários, marcações, resumo diário,
+ * observações e feriados) em vez de uma rodada por funcionário: a visão geral cresce com
+ * o número de pessoas e não deve multiplicar requisições. Dia sem marcação nenhuma é
+ * assunto do banco de horas individual, não deste acompanhamento — exceto falta,
+ * ausência justificada e feriado, que precisam aparecer para o dia não sumir da sequência.
  */
 export async function fetchPunchOverview(fromDate: string, toDate: string): Promise<PunchOverview> {
-  const [employees, punches, summaries, notesByKey] = await Promise.all([
+  const [employees, punches, summaries, notesByKey, holidays] = await Promise.all([
     fetchEmployees(),
     fetchPunchesForRangeAll(startOfAppDay(fromDate), startOfAppDay(addDays(toDate, 1))),
     fetchDailySummariesForAll(fromDate, toDate),
     fetchAbsenceNotes(fromDate, toDate),
+    fetchHolidays(fromDate, toDate),
   ]);
 
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
-  const rows = buildOverviewRows(punches, summaries, nameById, notesByKey);
+  // Feriado futuro fica de fora: o quadro vai até hoje, e anunciar um dia que ainda não
+  // chegou o faria parecer um dia já apurado.
+  const hoje = appToday();
+  const feriados = holidays.map((h) => h.day).filter((day) => day <= hoje);
+  const rows = buildOverviewRows(punches, summaries, nameById, notesByKey, feriados);
 
   const present = new Map<string, string>();
   for (const row of rows) present.set(row.employeeId, row.employeeName);

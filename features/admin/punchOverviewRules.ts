@@ -1,4 +1,4 @@
-import { appDate, appTime } from "../../lib/appDate.ts";
+import { appDate, appTime, appWeekday } from "../../lib/appDate.ts";
 import type { AbsenceKind, DailySummary, Punch } from "../../types/domain.ts";
 
 export type OverviewStatus =
@@ -9,7 +9,8 @@ export type OverviewStatus =
   | "absent"
   | "atestado"
   | "folga"
-  | "liberado";
+  | "liberado"
+  | "feriado";
 
 export interface OverviewRow {
   key: string;
@@ -33,7 +34,9 @@ export function buildOverviewRows(
   summaries: DailySummary[],
   nameById: Map<string, string>,
   /** Observações das ausências registradas, por `funcionário|dia`. */
-  notesByKey: Map<string, string> = new Map()
+  notesByKey: Map<string, string> = new Map(),
+  /** Feriados do período (YYYY-MM-DD), nacionais e cadastrados. */
+  feriados: Iterable<string> = []
 ): OverviewRow[] {
   const balanceByKey = new Map(summaries.map((s) => [`${s.employee_id}|${s.day}`, s.balance_minutes]));
   const absenceByKey = new Map<string, AbsenceKind>();
@@ -97,6 +100,47 @@ export function buildOverviewRows(
       status,
       notes: notesByKey.get(key) ?? null,
     });
+  }
+
+  // ⚠️ O FERIADO NÃO VEM DE LUGAR NENHUM, e é por isso que ele precisa ser inserido aqui.
+  // As linhas acima nascem de marcação ou de resumo diário, e a view `daily_summary` só
+  // gera linha para dia útil (`is_holiday`). Resultado: o feriado sem marcação não era
+  // falta nem nada — simplesmente sumia do meio da sequência, e quem olhava via 19/11
+  // logo abaixo de 23/11, como se o dia não tivesse existido. A linha é montada aqui, e
+  // não no SQL, de propósito: no banco de horas o feriado não é cobrado e não deve virar
+  // registro; o que falta é só a notícia na tela.
+  //
+  // Quem trabalhou no feriado já tem linha (as marcações existem), e essa linha fica como
+  // está: mostrar "Feriado" por cima apagaria as horas que a pessoa de fato cumpriu.
+  const primeiroDia = new Map<string, string>();
+  for (const row of rows) {
+    const atual = primeiroDia.get(row.employeeId);
+    if (!atual || row.day < atual) primeiroDia.set(row.employeeId, row.day);
+  }
+
+  for (const [employeeId, inicio] of primeiroDia) {
+    for (const day of feriados) {
+      // Antes do primeiro dia da pessoa no período não há o que noticiar: ela ainda não
+      // estava sendo acompanhada, e a linha seria invenção.
+      if (day < inicio) continue;
+      if (byKey.has(`${employeeId}|${day}`)) continue;
+      // Feriado em fim de semana não ganha linha: sábado e domingo nunca aparecem no
+      // quadro, e abrir uma exceção só para eles criaria um dia solto sem par.
+      const diaDaSemana = appWeekday(day);
+      if (diaDaSemana === 0 || diaDaSemana === 6) continue;
+
+      rows.push({
+        key: `${employeeId}|${day}`,
+        employeeId,
+        employeeName: nameById.get(employeeId) ?? "Funcionário",
+        day,
+        entrada: null,
+        saida: null,
+        balanceMinutes: null,
+        status: "feriado",
+        notes: null,
+      });
+    }
   }
 
   return rows.sort((a, b) =>

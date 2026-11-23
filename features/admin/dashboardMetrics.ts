@@ -58,6 +58,11 @@ export function buildPeriodMetrics(rows: OverviewRow[], summaries: DailySummary[
       case "pending":
         pendingDays += 1;
         break;
+      // Feriado não é dia de ninguém: não foi trabalhado, não é falta e não entra na
+      // conta de cobrança. Sem este caso ele cairia no `default` e seria contado como
+      // dia incompleto, inventando uma pendência onde não há jornada a cumprir.
+      case "feriado":
+        break;
       default:
         // incomplete e rejected: o dia tem marcação, mas não fecha o par.
         incompleteDays += 1;

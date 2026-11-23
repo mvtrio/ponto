@@ -15,6 +15,7 @@ const STATUS_LABEL: Record<OverviewStatus, string> = {
   atestado: "Atestado",
   folga: "Folga",
   liberado: "Liberado",
+  feriado: "Feriado",
 };
 
 function escapeCsvField(value: string | number): string {
