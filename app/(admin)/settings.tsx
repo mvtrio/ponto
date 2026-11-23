@@ -193,8 +193,9 @@ export default function SettingsScreen() {
       <Card style={styles.card}>
         <Text style={styles.label}>Feriados</Text>
         <Text style={styles.hint}>
-          Feriados nacionais de data fixa (Ano Novo, Tiradentes, Dia do Trabalho, Independência, etc.) já são
-          reconhecidos automaticamente. Cadastre aqui só feriados móveis (Carnaval, Páscoa) ou regionais.
+          Os feriados nacionais já são reconhecidos automaticamente, inclusive a Consciência Negra (20/11) e a
+          Sexta-feira Santa. Cadastre aqui só os de ponto facultativo (Carnaval, Corpus Christi), os regionais e os
+          da empresa.
         </Text>
 
         {holidays.map((h) => (
