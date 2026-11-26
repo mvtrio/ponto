@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PasswordInput } from "../../../components/ui/PasswordInput";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlatList, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -210,19 +211,17 @@ export default function EmployeeDetailScreen() {
 
             <Card style={styles.card}>
               <Text style={styles.label}>Redefinir senha</Text>
-              <TextInput
+              <PasswordInput
                 style={styles.input}
                 placeholder="Nova senha (mínimo 6 caracteres)"
                 placeholderTextColor={colors.textFaint}
-                secureTextEntry
                 value={newPassword}
                 onChangeText={setNewPassword}
               />
-              <TextInput
+              <PasswordInput
                 style={styles.input}
                 placeholder="Confirmar nova senha"
                 placeholderTextColor={colors.textFaint}
-                secureTextEntry
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
               />

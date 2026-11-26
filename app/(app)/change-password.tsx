@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -67,9 +68,8 @@ export default function ChangePasswordScreen() {
         <Text style={styles.title}>Alterar senha</Text>
 
         <Text style={styles.label}>Senha atual</Text>
-        <TextInput
+        <PasswordInput
           style={styles.input}
-          secureTextEntry
           autoComplete="current-password"
           value={currentPassword}
           onChangeText={setCurrentPassword}
@@ -78,9 +78,8 @@ export default function ChangePasswordScreen() {
         />
 
         <Text style={styles.label}>Nova senha</Text>
-        <TextInput
+        <PasswordInput
           style={styles.input}
-          secureTextEntry
           autoComplete="new-password"
           value={newPassword}
           onChangeText={setNewPassword}
@@ -89,9 +88,8 @@ export default function ChangePasswordScreen() {
         />
 
         <Text style={styles.label}>Confirmar nova senha</Text>
-        <TextInput
+        <PasswordInput
           style={styles.input}
-          secureTextEntry
           autoComplete="new-password"
           value={confirmPassword}
           onChangeText={setConfirmPassword}

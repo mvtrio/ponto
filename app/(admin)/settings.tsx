@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 import { DateField } from "../../components/ui/DateField";
 import { isoToBr } from "../../components/ui/brDate";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -246,19 +247,17 @@ export default function SettingsScreen() {
 
       <Card style={styles.card}>
         <Text style={styles.label}>Alterar minha senha</Text>
-        <TextInput
+        <PasswordInput
           style={styles.input}
           placeholder="Nova senha (mínimo 6 caracteres)"
           placeholderTextColor={colors.textFaint}
-          secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}
         />
-        <TextInput
+        <PasswordInput
           style={styles.input}
           placeholder="Confirmar nova senha"
           placeholderTextColor={colors.textFaint}
-          secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />

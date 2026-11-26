@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -78,21 +79,19 @@ export default function ForgotPasswordScreen() {
           onChangeText={setEmail}
         />
 
-        <TextInput
+        <PasswordInput
           style={styles.input}
           placeholder="Senha atual"
           placeholderTextColor={colors.textFaint}
-          secureTextEntry
           autoCapitalize="none"
           value={currentPassword}
           onChangeText={setCurrentPassword}
         />
 
-        <TextInput
+        <PasswordInput
           style={styles.input}
           placeholder="Nova senha"
           placeholderTextColor={colors.textFaint}
-          secureTextEntry
           autoCapitalize="none"
           value={newPassword}
           onChangeText={setNewPassword}
